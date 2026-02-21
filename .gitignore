@@ -1,0 +1,50 @@
+# Maven
+target/
+*.jar
+*.war
+*.zip
+*.tar.gz
+.m2/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+dist/
+.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build
+build/
+dist/
+out/
+
+# IDE files
+.classpath
+.project
+.settings/
+*.iml
+.gradle/
