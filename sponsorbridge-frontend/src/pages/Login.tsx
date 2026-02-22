@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import api from '../services/api';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,22 +14,22 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      // Use Axios service with configured baseURL
+      const response = await api.post('/auth/login', { 
+        email, 
+        password 
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
+      if (response.status === 200) {
+        const data = response.data;
+        localStorage.setItem('token', data.token || '');
         localStorage.setItem('user', JSON.stringify(data));
         window.location.href = '/';
-      } else {
-        setError('Invalid email or password');
       }
-    } catch (err) {
-      setError('Login failed. Please try again.');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import api from '../services/api';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,26 +18,27 @@ const Register: React.FC = () => {
     setSuccess('');
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, password, role }),
+      // Use Axios service with configured baseURL
+      const response = await api.post('/auth/register', { 
+        email, 
+        name, 
+        password, 
+        role 
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
+      if (response.status === 201) {
+        const data = response.data;
+        localStorage.setItem('token', data.token || '');
         localStorage.setItem('user', JSON.stringify(data));
         setSuccess('Account created successfully! Redirecting...');
         setTimeout(() => {
           window.location.href = '/';
         }, 1500);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Registration failed');
       }
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

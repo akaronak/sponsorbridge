@@ -18,36 +18,209 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #ffffff;
-  color: #111827;
+  background-color: #0f172a;
+  color: #f1f5f9;
 }
 
-/* Custom scrollbar */
+/* Premium Dark Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: #0f172a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #6366f1 0%, #3b82f6 100%);
+  border-radius: 5px;
+  border: 2px solid #0f172a;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: linear-gradient(180deg, #818cf8 0%, #60a5fa 100%);
 }
 
-/* Smooth transitions */
-button,
-a {
-  transition: all 0.3s ease;
+/* ===== MICRO-INTERACTIONS ===== */
+
+/* Smooth button base transitions */
+button {
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Button press animation - scale down on click */
+button:active {
+  transform: scale(0.97);
+}
+
+/* Interactive elements smooth hover */
+a, button, [role="button"] {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Card lift effect on hover */
+[data-card], .card, .feature-card {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-card]:hover, .card:hover, .feature-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Smooth focus states for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Input smooth transitions */
+input, select, textarea {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* ===== SECTION TRANSITIONS ===== */
+section {
+  animation: fadeInUp 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered animations */
+.stagger-item {
+  animation: fadeInUp 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Smooth page transitions */
+main {
+  opacity: 1;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== DROPDOWN AND MENU ANIMATIONS ===== */
+[role="menu"], [role="dialog"], .dropdown {
+  animation: slideDown 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Nav items smooth appearance */
+nav a, nav button {
+  position: relative;
+  transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Utility classes for premium animations */
+.transition-smooth {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth-lg {
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.15);
+}
+
+.hover-glow {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+}
+
+/* Button state animations - PREMIUM feel */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -5px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* No jarring transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== CONTROLLED, SMOOTH ANIMATIONS ===== */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Smooth text fade-ins */
+.text-reveal {
+  animation: fadeInUp 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* Focus states for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Scale utilities for press animations */
+.scale-97 {
+  --tw-scale-x: 0.97;
+  --tw-scale-y: 0.97;
+  transform: translateZ(0) scale(var(--tw-scale-x), var(--tw-scale-y));
+}
+
+button:active {
+  --tw-scale-x: 0.97;
+  --tw-scale-y: 0.97;
+}
+
+
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid #0284c7;

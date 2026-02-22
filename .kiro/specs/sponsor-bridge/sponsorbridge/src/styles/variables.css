@@ -1,0 +1,14 @@
+:root {
+    --primary-color: #4A90E2;
+    --secondary-color: #50E3C2;
+    --accent-color: #F5A623;
+    --background-color: #FFFFFF;
+    --text-color: #333333;
+    --heading-font: 'Roboto', sans-serif;
+    --body-font: 'Open Sans', sans-serif;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-sm: 14px;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
