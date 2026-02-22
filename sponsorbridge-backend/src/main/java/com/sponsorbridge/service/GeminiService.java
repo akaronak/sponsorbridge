@@ -39,7 +39,7 @@ public class GeminiService {
     private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
 
     private static final String GEMINI_API_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
     private static final int MAX_HISTORY_TURNS = 20;  // Keep last 20 turns (10 user + 10 model)
     private static final int MAX_RETRIES = 2;
