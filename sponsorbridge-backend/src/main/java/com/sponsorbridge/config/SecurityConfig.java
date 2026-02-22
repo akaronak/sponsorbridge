@@ -76,6 +76,9 @@ public class SecurityConfig {
                         // Admin endpoints - require ADMIN role
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // AI endpoints - require authentication
+                        .requestMatchers("/api/ai/**").authenticated()
+
                         // Message endpoints - require authentication
                         .requestMatchers("/api/messages/**").authenticated()
                         .requestMatchers("/api/requests/{id}").authenticated()

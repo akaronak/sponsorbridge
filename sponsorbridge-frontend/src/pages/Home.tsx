@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut, Menu, X } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import PremiumHero from '../components/PremiumHero';
-import Features from '../components/Features';
+import FeaturesShowcase from '../components/FeaturesShowcase';
+import WorkflowTimeline from '../components/WorkflowTimeline';
 import SocialProof from '../components/SocialProof';
 import HowItWorks from '../components/HowItWorks';
 import FinalCTA from '../components/FinalCTA';
@@ -10,19 +12,12 @@ import Footer from '../components/Footer';
 
 const Home: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/';
+    logout();
+    navigate('/');
   };
 
   return (
@@ -41,15 +36,15 @@ const Home: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {user ? (
+            {isAuthenticated && user ? (
               <div className="relative group">
                 <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white hover:bg-slate-700 transition-all duration-200 active:scale-97">
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline">{user.name}</span>
                 </button>
                 <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <a href="/dashboard" className="block px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-150">Dashboard</a>
-                  <a href="#settings" className="block px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-150">Settings</a>
+                  <Link to="/dashboard" className="block px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-150">Dashboard</Link>
+                  <Link to="/dashboard/settings" className="block px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-150">Settings</Link>
                   <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center gap-2 transition-all duration-150">
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -81,7 +76,8 @@ const Home: React.FC = () => {
 
       {/* Landing Page Components */}
       <PremiumHero />
-      <Features />
+      <FeaturesShowcase />
+      <WorkflowTimeline />
       <SocialProof />
       <HowItWorks />
       <FinalCTA />
