@@ -63,7 +63,6 @@ const HowItWorks: React.FC = () => {
 
       // Calculate progress from 0 to 100
       const elementStart = elementTop + window.scrollY;
-      const elementEnd = elementStart + elementHeight;
       const scrollPosition = window.scrollY + viewportHeight / 2;
 
       const progress = Math.max(0, Math.min(100, ((scrollPosition - elementStart) / elementHeight) * 100));

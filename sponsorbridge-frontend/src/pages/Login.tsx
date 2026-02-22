@@ -14,7 +14,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      // Use Axios service with configured baseURL and Vite proxy
+      // Use Axios service - baseURL is http://localhost:8080, endpoints are /api/auth/*
       const response = await api.post('/api/auth/login', { 
         email, 
         password 
