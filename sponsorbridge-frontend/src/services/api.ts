@@ -1,4 +1,4 @@
-import axios, { Axiosinstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 // Development: Use relative path with Vite proxy
 // Production: Use environment variable for API base URL
