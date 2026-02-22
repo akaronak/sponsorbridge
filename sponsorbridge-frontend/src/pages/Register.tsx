@@ -18,23 +18,25 @@ const Register: React.FC = () => {
     setSuccess('');
 
     try {
-      // Use Axios service with configured baseURL
-      const response = await api.post('/auth/register', { 
+      // Use Axios service with configured baseURL and Vite proxy
+      const response = await api.post('/api/auth/register', { 
         email, 
         name, 
         password, 
         role 
       });
 
-      if (response.status === 201) {
-        const data = response.data;
-        localStorage.setItem('token', data.token || '');
-        localStorage.setItem('user', JSON.stringify(data));
-        setSuccess('Account created successfully! Redirecting...');
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1500);
-      }
+      const data = response.data;
+      // Extract token and user from response
+      const token = data.token || '';
+      const user = data.user || { email, name };
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      setSuccess('Account created successfully! Redirecting...');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     } catch (err: any) {
       console.error('Registration error:', err);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed';

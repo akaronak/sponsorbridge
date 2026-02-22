@@ -14,18 +14,20 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      // Use Axios service with configured baseURL
-      const response = await api.post('/auth/login', { 
+      // Use Axios service with configured baseURL and Vite proxy
+      const response = await api.post('/api/auth/login', { 
         email, 
         password 
       });
 
-      if (response.status === 200) {
-        const data = response.data;
-        localStorage.setItem('token', data.token || '');
-        localStorage.setItem('user', JSON.stringify(data));
-        window.location.href = '/';
-      }
+      const data = response.data;
+      // Extract token and user from response
+      const token = data.token || '';
+      const user = data.user || { email, name: '' };
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      window.location.href = '/';
     } catch (err: any) {
       console.error('Login error:', err);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password';

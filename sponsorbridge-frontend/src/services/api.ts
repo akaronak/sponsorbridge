@@ -1,10 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 
-// Development: Use relative path with Vite proxy
-// Production: Use environment variable for API base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || (process.env.NODE_ENV === 'production' 
-  ? 'https://api.sponsorbridge.com' 
-  : 'http://localhost:8080');
+// Use Vite dev server proxy the frontend is running on
+// The /api path will be proxied to http://localhost:8080 by Vite
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -12,6 +10,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false,
 });
 
 // Add JWT token to every request if it exists
@@ -20,6 +19,8 @@ api.interceptors.request.use((config) => {
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Log request for debugging
+  console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 }, (error) => {
   return Promise.reject(error);
@@ -27,8 +28,12 @@ api.interceptors.request.use((config) => {
 
 // Handle response errors globally
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API] Response: ${response.status}`, response.data);
+    return response;
+  },
   (error) => {
+    console.error(`[API] Error:`, error.message, error.response?.data);
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('token');
