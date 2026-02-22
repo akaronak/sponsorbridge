@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const subtextRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -99,11 +101,17 @@ const Hero: React.FC = () => {
           ref={ctaRef}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
-          <button className="group px-8 py-4 bg-white text-slate-950 font-semibold rounded-xl hover:bg-slate-100 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-2xl hover:-translate-y-1 active:scale-97">
+          <button 
+            onClick={() => navigate('/register')}
+            className="group px-8 py-4 bg-white text-slate-950 font-semibold rounded-xl hover:bg-slate-100 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-2xl hover:-translate-y-1 active:scale-97"
+          >
             Get Started
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
           </button>
-          <button className="px-8 py-4 border border-slate-600 text-white font-semibold rounded-xl hover:bg-white/5 hover:border-slate-500 transition-all duration-200 active:scale-97">
+          <button 
+            onClick={() => navigate('/login')}
+            className="px-8 py-4 border border-slate-600 text-white font-semibold rounded-xl hover:bg-white/5 hover:border-slate-500 transition-all duration-200 active:scale-97"
+          >
             Explore Sponsors
           </button>
         </div>

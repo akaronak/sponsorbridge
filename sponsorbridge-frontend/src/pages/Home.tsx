@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut, Menu, X } from 'lucide-react';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
@@ -7,6 +8,7 @@ import HowItWorks from '../components/HowItWorks';
 import FinalCTA from '../components/FinalCTA';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
 
@@ -56,8 +58,8 @@ const Home: React.FC = () => {
               </div>
             ) : (
               <>
-                <a href="/login" className="px-4 py-2 text-slate-300 hover:text-white transition-all duration-200">Sign In</a>
-                <a href="/register" className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 active:scale-97">Register</a>
+                <Link to="/login" className="px-4 py-2 text-slate-300 hover:text-white transition-all duration-200">Sign In</Link>
+                <Link to="/register" className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 active:scale-97">Register</Link>
               </>
             )}
             <button onClick={() => setShowMenu(!showMenu)} className="md:hidden text-white transition-all duration-200">

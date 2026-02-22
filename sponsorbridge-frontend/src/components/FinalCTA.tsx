@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 const FinalCTA: React.FC = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -49,6 +51,7 @@ const FinalCTA: React.FC = () => {
         <div className="flex justify-center">
           <button
             ref={buttonRef}
+            onClick={() => navigate('/register')}
             className="group relative px-12 py-6 text-lg font-semibold text-white transition-all duration-300 hover:-translate-y-1 active:scale-97 rounded-xl"
             style={{
               background: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)',
