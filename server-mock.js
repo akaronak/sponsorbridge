@@ -21,7 +21,7 @@ app.post('/api/auth/register', (req, res) => {
     return res.status(409).json({ error: 'Email already registered' });
   }
   
-  const user = { id: Date.now(), email, name, password, role: role || 'organizer' };
+  const user = { id: Date.now(), email, name, password, role: role || 'ORGANIZER' };
   users.set(email, user);
   
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET);
@@ -459,8 +459,712 @@ app.get('/api/ai/health', (req, res) => {
   });
 });
 
+// ── Company (Sponsor) API Endpoints ──────────────────────────
+
+// Auth middleware helper
+function authenticateToken(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+// Company stats
+app.get('/api/company/stats', authenticateToken, (req, res) => {
+  res.json({
+    totalRequests: 24,
+    activePartnerships: 8,
+    upcomingSponsored: 5,
+    responseRate: 92,
+    avgDealValue: 12300,
+    totalInvestment: 98500,
+    proposalsSent: 24,
+    proposalsAccepted: 8,
+    proposalsPending: 6,
+    proposalsRejected: 3,
+  });
+});
+
+// Discoverable events
+app.get('/api/company/events', authenticateToken, (req, res) => {
+  res.json([
+    { id: 'e1', title: 'HackFest 2026', type: 'HACKATHON', location: 'San Francisco, CA', date: '2026-06-15', budgetRequired: 15000, sponsorshipType: 'HYBRID', audienceSize: 2000, industry: 'TECHNOLOGY', credibilityScore: { overall: 88 } },
+    { id: 'e2', title: 'Spring Career Fair 2026', type: 'CAREER_FAIR', location: 'New York, NY', date: '2026-04-20', budgetRequired: 20000, sponsorshipType: 'MONETARY', audienceSize: 5000, industry: 'EDUCATION', credibilityScore: { overall: 92 } },
+    { id: 'e3', title: 'AI Summit 2026', type: 'CONFERENCE', location: 'Austin, TX', date: '2026-08-10', budgetRequired: 30000, sponsorshipType: 'MONETARY', audienceSize: 3000, industry: 'TECHNOLOGY', credibilityScore: { overall: 75 } },
+  ]);
+});
+
+// Submit proposal
+app.post('/api/company/proposals', authenticateToken, (req, res) => {
+  const { eventId, monetaryOffer, goodiesDescription, conditions, brandingExpectations, negotiationDeadline, message } = req.body;
+  if (!eventId || !negotiationDeadline) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const proposal = {
+    id: 'p' + Date.now(),
+    eventId,
+    status: 'SENT',
+    monetaryOffer: monetaryOffer || 0,
+    goodiesDescription: goodiesDescription || '',
+    conditions: conditions || '',
+    brandingExpectations: brandingExpectations || '',
+    negotiationDeadline,
+    message: message || '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  res.status(201).json(proposal);
+});
+
+// Get proposals
+app.get('/api/company/proposals', authenticateToken, (req, res) => {
+  res.json([
+    { id: 'p1', eventTitle: 'HackFest 2026', status: 'ACCEPTED', monetaryOffer: 10000, createdAt: '2026-02-01' },
+    { id: 'p2', eventTitle: 'Spring Career Fair 2026', status: 'VIEWED', monetaryOffer: 15000, createdAt: '2026-02-05' },
+    { id: 'p3', eventTitle: 'Music & Arts Festival', status: 'COUNTERED', monetaryOffer: 5000, counterOffer: { amount: 7500 }, createdAt: '2026-02-08' },
+    { id: 'p4', eventTitle: 'AI Summit 2026', status: 'SENT', monetaryOffer: 20000, createdAt: '2026-02-18' },
+  ]);
+});
+
+// Get deals
+app.get('/api/company/deals', authenticateToken, (req, res) => {
+  res.json([
+    { id: 'd1', eventTitle: 'HackFest 2026', status: 'ACTIVE', agreedAmount: 10000, sponsorshipType: 'MONETARY', startDate: '2026-03-01', endDate: '2026-06-01' },
+    { id: 'd2', eventTitle: 'Innovation Week 2026', status: 'ACTIVE', agreedAmount: 25000, sponsorshipType: 'HYBRID', startDate: '2026-04-01', endDate: '2026-07-15' },
+    { id: 'd3', eventTitle: 'Code Summit 2025', status: 'COMPLETED', agreedAmount: 7500, sponsorshipType: 'MONETARY', startDate: '2025-10-01', endDate: '2025-12-15' },
+  ]);
+});
+
+// Company analytics
+app.get('/api/company/analytics', authenticateToken, (req, res) => {
+  res.json({
+    totalInvestment: 98500,
+    avgROI: 3.2,
+    brandImpressions: 245000,
+    dealConversion: 68,
+    proposalsSent: 24,
+    avgResponseTime: 2.3,
+  });
+});
+
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+
+// ══════════════════════════════════════════════════════════════
+// Real-time Messaging System (WebSocket + REST Mock)
+// ══════════════════════════════════════════════════════════════
+
+const http = require('http');
+const { WebSocketServer } = require('ws');
+
+const server = http.createServer(app);
+
+// ── In-Memory Messaging Store ──
+
+const conversations = new Map();
+const conversationMessages = new Map(); // conversationId → messages[]
+const notifications = new Map(); // userId → notifications[]
+let nextConvId = 1;
+let nextMsgId = 1;
+let nextNotifId = 1;
+
+// Track WebSocket connections per user
+const wsConnections = new Map(); // userId → Set<ws>
+
+// ── Seed Demo Conversations ──
+
+function seedMessagingData() {
+  // We'll seed conversations dynamically when users register/login
+  // But let's create sample data structure for immediate testing
+  const demoConversations = [
+    {
+      id: nextConvId++,
+      companyId: null, companyName: 'TechCorp Inc.',
+      organizerId: null, organizerName: 'Sarah Chen',
+      eventName: 'HackFest 2026',
+      subject: 'Platinum Sponsorship - HackFest 2026',
+      status: 'ACTIVE',
+      lastMessagePreview: 'Sounds great! Let\'s finalize the package.',
+      lastMessageAt: new Date(Date.now() - 120000).toISOString(),
+      unreadCompany: 0, unreadOrganizer: 2,
+      createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    },
+    {
+      id: nextConvId++,
+      companyId: null, companyName: 'InnovateCo',
+      organizerId: null, organizerName: 'James Rodriguez',
+      eventName: 'Spring Career Fair 2026',
+      subject: 'Gold Tier Discussion',
+      status: 'ACTIVE',
+      lastMessagePreview: 'We are interested in the Gold tier. Can we discuss?',
+      lastMessageAt: new Date(Date.now() - 3600000).toISOString(),
+      unreadCompany: 1, unreadOrganizer: 0,
+      createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    },
+    {
+      id: nextConvId++,
+      companyId: null, companyName: 'BrandLabs',
+      organizerId: null, organizerName: 'Emily Watson',
+      eventName: 'Music & Arts Festival',
+      subject: 'Sponsorship Proposal Review',
+      status: 'ACTIVE',
+      lastMessagePreview: 'Thanks for the proposal! Our team will review by Friday.',
+      lastMessageAt: new Date(Date.now() - 10800000).toISOString(),
+      unreadCompany: 0, unreadOrganizer: 0,
+      createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    },
+    {
+      id: nextConvId++,
+      companyId: null, companyName: 'GreenEnergy Co',
+      organizerId: null, organizerName: 'Michael Park',
+      eventName: 'Sustainability Summit 2026',
+      subject: 'Panel Discussion Sponsorship',
+      status: 'ACTIVE',
+      lastMessagePreview: 'Looking forward to the sustainability panel discussion.',
+      lastMessageAt: new Date(Date.now() - 86400000).toISOString(),
+      unreadCompany: 0, unreadOrganizer: 0,
+      createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+    },
+    {
+      id: nextConvId++,
+      companyId: null, companyName: 'DataViz Corp',
+      organizerId: null, organizerName: 'Aisha Patel',
+      eventName: 'AI Summit 2026',
+      subject: 'Workshop Sponsorship Inquiry',
+      status: 'ACTIVE',
+      lastMessagePreview: 'Could you share the attendee demographics?',
+      lastMessageAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      unreadCompany: 3, unreadOrganizer: 0,
+      createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    }
+  ];
+
+  demoConversations.forEach(c => conversations.set(c.id, c));
+
+  // Seed messages for conversation 1 (HackFest negotiation)
+  const conv1Messages = [
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'organizer', senderName: 'Sarah Chen', senderRole: 'ORGANIZER',
+      messageType: 'TEXT',
+      content: 'Hi there! We reviewed your company profile and think TechCorp would be an amazing fit for HackFest 2026. Would you be interested in discussing sponsorship opportunities?',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'company', senderName: 'TechCorp Inc.', senderRole: 'COMPANY',
+      messageType: 'TEXT',
+      content: 'Thank you Sarah! We\'ve been following HackFest and are very impressed with the growth. We\'d love to explore the Platinum tier.',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 3 + 1800000).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'organizer', senderName: 'Sarah Chen', senderRole: 'ORGANIZER',
+      messageType: 'PROPOSAL',
+      content: 'Here\'s our Platinum sponsorship proposal for HackFest 2026. This includes main stage branding, a dedicated booth, sponsored challenge track, and keynote speaking slot.',
+      proposalAmount: 25000, sponsorshipType: 'HYBRID',
+      proposalTerms: 'Main stage branding, dedicated 10x10 booth, sponsored challenge track with $5K prize pool, 15-min keynote slot, logo on all marketing materials, 500 attendee data leads.',
+      proposalDeadline: new Date(Date.now() + 86400000 * 14).toISOString(),
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'company', senderName: 'TechCorp Inc.', senderRole: 'COMPANY',
+      messageType: 'COUNTER_OFFER',
+      content: 'The proposal looks excellent! We\'d like to counter with a slightly different structure. We can offer $20K monetary + $5K in cloud computing credits for participants.',
+      proposalAmount: 20000, sponsorshipType: 'HYBRID',
+      proposalTerms: '$20K monetary sponsorship + $5K in cloud credits for participants. We\'d also like to add a "Best Use of Our API" challenge category.',
+      parentMessageId: 3,
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'organizer', senderName: 'Sarah Chen', senderRole: 'ORGANIZER',
+      messageType: 'TEXT',
+      content: 'That sounds like a creative approach! The API challenge category is a great idea. Let me discuss with my team and get back to you.',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'organizer', senderName: 'Sarah Chen', senderRole: 'ORGANIZER',
+      messageType: 'TEXT',
+      content: 'Great news! The team loved the API challenge idea. We accept the counter-offer. Shall we proceed with the deal?',
+      status: 'DELIVERED', createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 1,
+      senderId: 'company', senderName: 'TechCorp Inc.', senderRole: 'COMPANY',
+      messageType: 'TEXT',
+      content: 'Sounds great! Let\'s finalize the package.',
+      status: 'SENT', createdAt: new Date(Date.now() - 120000).toISOString(),
+    },
+  ];
+  conversationMessages.set(1, conv1Messages);
+
+  // Seed messages for conversation 2
+  const conv2Messages = [
+    {
+      id: nextMsgId++, conversationId: 2,
+      senderId: 'company', senderName: 'InnovateCo', senderRole: 'COMPANY',
+      messageType: 'TEXT',
+      content: 'Hi James, we came across your Spring Career Fair event. InnovateCo is looking to recruit top talent and thought this would be a great opportunity.',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 2,
+      senderId: 'organizer', senderName: 'James Rodriguez', senderRole: 'ORGANIZER',
+      messageType: 'TEXT',
+      content: 'Welcome! We\'d love to have InnovateCo at the Career Fair. We have several sponsorship tiers available. The Gold tier includes a premium booth location and resume database access.',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 2,
+      senderId: 'company', senderName: 'InnovateCo', senderRole: 'COMPANY',
+      messageType: 'TEXT',
+      content: 'We are interested in the Gold tier. Can we discuss the details? Specifically, how many interview slots are included?',
+      status: 'SENT', createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+  ];
+  conversationMessages.set(2, conv2Messages);
+
+  // Seed messages for conversation 3
+  conversationMessages.set(3, [
+    {
+      id: nextMsgId++, conversationId: 3,
+      senderId: 'company', senderName: 'BrandLabs', senderRole: 'COMPANY',
+      messageType: 'PROPOSAL',
+      content: 'We\'d like to sponsor the Music & Arts Festival with a focus on emerging artists showcase.',
+      proposalAmount: 15000, sponsorshipType: 'MONETARY',
+      proposalTerms: 'Sponsor the Emerging Artists Stage, brand visibility across festival grounds, VIP passes for 20 guests.',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 3,
+      senderId: 'organizer', senderName: 'Emily Watson', senderRole: 'ORGANIZER',
+      messageType: 'TEXT',
+      content: 'Thanks for the proposal! Our team will review by Friday. We\'ll get back to you with any questions.',
+      status: 'READ', createdAt: new Date(Date.now() - 10800000).toISOString(),
+    },
+  ]);
+
+  // Seed messages for conversations 4 & 5
+  conversationMessages.set(4, [
+    {
+      id: nextMsgId++, conversationId: 4,
+      senderId: 'company', senderName: 'GreenEnergy Co', senderRole: 'COMPANY',
+      messageType: 'TEXT',
+      content: 'Looking forward to the sustainability panel discussion. Can we have a dedicated Q&A segment?',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ]);
+
+  conversationMessages.set(5, [
+    {
+      id: nextMsgId++, conversationId: 5,
+      senderId: 'organizer', senderName: 'Aisha Patel', senderRole: 'ORGANIZER',
+      messageType: 'TEXT',
+      content: 'Hi DataViz! Thanks for your interest in the AI Summit. We have some exciting workshop slots available.',
+      status: 'READ', createdAt: new Date(Date.now() - 86400000 * 9).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 5,
+      senderId: 'company', senderName: 'DataViz Corp', senderRole: 'COMPANY',
+      messageType: 'TEXT',
+      content: 'That sounds great! Could you share the attendee demographics? We want to make sure our data visualization workshop targets the right audience.',
+      status: 'SENT', createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+    {
+      id: nextMsgId++, conversationId: 5,
+      senderId: 'organizer', senderName: 'Aisha Patel', senderRole: 'ORGANIZER',
+      messageType: 'SYSTEM_EVENT',
+      content: 'Aisha Patel shared attendee demographics report',
+      metadata: JSON.stringify({ action: 'FILE_SHARED', fileName: 'AI_Summit_Demographics_2026.pdf' }),
+      status: 'SENT', createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString(),
+    },
+  ]);
+}
+
+seedMessagingData();
+
+// ── Helper: get user's conversations with proper participant mapping ──
+function getUserConversations(userId, userRole) {
+  const result = [];
+  conversations.forEach(conv => {
+    // Clone conversation and add participant info relative to current user
+    const c = { ...conv };
+
+    if (userRole === 'COMPANY') {
+      c.participantId = c.organizerId || 'organizer-' + c.id;
+      c.participantName = c.organizerName;
+      c.participantRole = 'ORGANIZER';
+      c.unreadCount = c.unreadCompany || 0;
+    } else {
+      c.participantId = c.companyId || 'company-' + c.id;
+      c.participantName = c.companyName;
+      c.participantRole = 'COMPANY';
+      c.unreadCount = c.unreadOrganizer || 0;
+    }
+
+    result.push(c);
+  });
+
+  // Sort by lastMessageAt descending
+  result.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+  return result;
+}
+
+// ── REST Endpoints for Conversations ──
+
+// GET conversations list
+app.get('/api/conversations', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const convos = getUserConversations(user.id, user.role);
+  res.json(convos);
+});
+
+// POST create conversation
+app.post('/api/conversations', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const { participantId, eventName, subject, initialMessage } = req.body;
+
+  if (!eventName) {
+    return res.status(400).json({ error: 'Event name is required' });
+  }
+
+  const conv = {
+    id: nextConvId++,
+    companyId: user.role === 'COMPANY' ? user.id : participantId,
+    companyName: user.role === 'COMPANY' ? user.name : 'Partner Company',
+    organizerId: user.role === 'ORGANIZER' ? user.id : participantId,
+    organizerName: user.role === 'ORGANIZER' ? user.name : 'Event Organizer',
+    eventName,
+    subject: subject || 'Re: ' + eventName,
+    status: 'ACTIVE',
+    lastMessagePreview: initialMessage || '',
+    lastMessageAt: new Date().toISOString(),
+    unreadCompany: user.role === 'ORGANIZER' ? 1 : 0,
+    unreadOrganizer: user.role === 'COMPANY' ? 1 : 0,
+    createdAt: new Date().toISOString(),
+  };
+
+  conversations.set(conv.id, conv);
+  conversationMessages.set(conv.id, []);
+
+  if (initialMessage) {
+    const msg = {
+      id: nextMsgId++,
+      conversationId: conv.id,
+      senderId: user.id,
+      senderName: user.name,
+      senderRole: user.role,
+      messageType: 'TEXT',
+      content: initialMessage,
+      status: 'SENT',
+      createdAt: new Date().toISOString(),
+    };
+    conversationMessages.get(conv.id).push(msg);
+  }
+
+  // Add participant info
+  conv.participantId = participantId;
+  conv.participantName = user.role === 'COMPANY' ? conv.organizerName : conv.companyName;
+  conv.participantRole = user.role === 'COMPANY' ? 'ORGANIZER' : 'COMPANY';
+  conv.unreadCount = 0;
+
+  res.status(201).json(conv);
+});
+
+// GET single conversation
+app.get('/api/conversations/:id', authenticateToken, (req, res) => {
+  const conv = conversations.get(parseInt(req.params.id));
+  if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+
+  const user = getUserFromToken(req);
+  const c = { ...conv };
+  if (user.role === 'COMPANY') {
+    c.participantId = c.organizerId || 'organizer-' + c.id;
+    c.participantName = c.organizerName;
+    c.participantRole = 'ORGANIZER';
+    c.unreadCount = c.unreadCompany || 0;
+  } else {
+    c.participantId = c.companyId || 'company-' + c.id;
+    c.participantName = c.companyName;
+    c.participantRole = 'COMPANY';
+    c.unreadCount = c.unreadOrganizer || 0;
+  }
+
+  res.json(c);
+});
+
+// GET messages for a conversation
+app.get('/api/conversations/:id/messages', authenticateToken, (req, res) => {
+  const convId = parseInt(req.params.id);
+  const msgs = conversationMessages.get(convId) || [];
+  res.json(msgs);
+});
+
+// POST send message in a conversation
+app.post('/api/conversations/:id/messages', authenticateToken, (req, res) => {
+  const convId = parseInt(req.params.id);
+  const conv = conversations.get(convId);
+  if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+
+  const user = getUserFromToken(req);
+  const { content, messageType, proposalAmount, sponsorshipType, proposalTerms, goodiesDescription, proposalDeadline, parentMessageId } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: 'Content is required' });
+  }
+
+  const msg = {
+    id: nextMsgId++,
+    conversationId: convId,
+    senderId: user.id,
+    senderName: user.name,
+    senderRole: user.role,
+    messageType: messageType || 'TEXT',
+    content,
+    status: 'SENT',
+    proposalAmount: proposalAmount || null,
+    sponsorshipType: sponsorshipType || null,
+    proposalTerms: proposalTerms || null,
+    goodiesDescription: goodiesDescription || null,
+    proposalDeadline: proposalDeadline || null,
+    parentMessageId: parentMessageId || null,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!conversationMessages.has(convId)) {
+    conversationMessages.set(convId, []);
+  }
+  conversationMessages.get(convId).push(msg);
+
+  // Update conversation metadata
+  const preview = content.length > 100 ? content.substring(0, 100) + '...' : content;
+  conv.lastMessagePreview = preview;
+  conv.lastMessageAt = msg.createdAt;
+
+  // Increment unread for the OTHER party
+  if (user.role === 'COMPANY') {
+    conv.unreadOrganizer = (conv.unreadOrganizer || 0) + 1;
+  } else {
+    conv.unreadCompany = (conv.unreadCompany || 0) + 1;
+  }
+
+  // Broadcast via WebSocket to all connected clients for this conversation
+  broadcastToConversation(convId, { type: 'NEW_MESSAGE', data: msg });
+
+  res.status(201).json(msg);
+});
+
+// POST mark conversation as read
+app.post('/api/conversations/:id/read', authenticateToken, (req, res) => {
+  const convId = parseInt(req.params.id);
+  const conv = conversations.get(convId);
+  if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+
+  const user = getUserFromToken(req);
+
+  // Reset unread count for this user's side
+  if (user.role === 'COMPANY') {
+    conv.unreadCompany = 0;
+  } else {
+    conv.unreadOrganizer = 0;
+  }
+
+  // Mark messages as read
+  const msgs = conversationMessages.get(convId) || [];
+  msgs.forEach(m => {
+    if (m.senderId !== user.id && m.status !== 'READ') {
+      m.status = 'READ';
+      m.readAt = new Date().toISOString();
+    }
+  });
+
+  // Broadcast read receipt
+  broadcastToConversation(convId, {
+    type: 'READ_RECEIPT',
+    data: { conversationId: convId, userId: user.id, readAt: new Date().toISOString() }
+  });
+
+  res.status(204).send();
+});
+
+// GET unread count
+app.get('/api/conversations/unread', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  let count = 0;
+  conversations.forEach(conv => {
+    if (user.role === 'COMPANY') {
+      count += conv.unreadCompany || 0;
+    } else {
+      count += conv.unreadOrganizer || 0;
+    }
+  });
+  res.json({ count });
+});
+
+// ── Notifications REST ──
+
+app.get('/api/notifications', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const userNotifs = notifications.get(user.id?.toString()) || [];
+  res.json(userNotifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+});
+
+app.get('/api/notifications/unread', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const userNotifs = (notifications.get(user.id?.toString()) || []).filter(n => !n.isRead);
+  res.json(userNotifs);
+});
+
+app.get('/api/notifications/count', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const userNotifs = (notifications.get(user.id?.toString()) || []).filter(n => !n.isRead);
+  res.json({ count: userNotifs.length });
+});
+
+app.post('/api/notifications/:id/read', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const notifId = parseInt(req.params.id);
+  const userNotifs = notifications.get(user.id?.toString()) || [];
+  const notif = userNotifs.find(n => n.id === notifId);
+  if (notif) notif.isRead = true;
+  res.status(204).send();
+});
+
+app.post('/api/notifications/read-all', authenticateToken, (req, res) => {
+  const user = getUserFromToken(req);
+  const userNotifs = notifications.get(user.id?.toString()) || [];
+  let count = 0;
+  userNotifs.forEach(n => { if (!n.isRead) { n.isRead = true; count++; } });
+  res.json({ marked: count });
+});
+
+// ── Helper: Extract user from JWT ──
+function getUserFromToken(req) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return { id: 'unknown', name: 'Unknown', role: 'ORGANIZER' };
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Find user in our store
+    for (const [, user] of users) {
+      if (user.id === decoded.id || user.email === decoded.email) {
+        return { id: user.id, name: user.name, role: user.role, email: user.email };
+      }
+    }
+    return { id: decoded.id, name: 'User', role: 'ORGANIZER' };
+  } catch {
+    return { id: 'unknown', name: 'Unknown', role: 'ORGANIZER' };
+  }
+}
+
+// ── WebSocket Server (alongside Express) ──
+
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+wss.on('connection', (ws, req) => {
+  let userId = null;
+
+  // Parse token from URL query
+  const url = new URL(req.url, 'http://localhost');
+  const token = url.searchParams.get('token');
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userId = decoded.id?.toString() || decoded.email;
+
+      // Register connection
+      if (!wsConnections.has(userId)) {
+        wsConnections.set(userId, new Set());
+      }
+      wsConnections.get(userId).add(ws);
+
+      ws.send(JSON.stringify({ type: 'CONNECTED', data: { userId } }));
+      console.log(`WebSocket connected: user ${userId}`);
+    } catch (err) {
+      ws.send(JSON.stringify({ type: 'AUTH_ERROR', data: { message: 'Invalid token' } }));
+      ws.close();
+      return;
+    }
+  }
+
+  ws.on('message', (raw) => {
+    try {
+      const message = JSON.parse(raw);
+
+      switch (message.type) {
+        case 'TYPING': {
+          const { conversationId, typing } = message.data;
+          broadcastToConversation(conversationId, {
+            type: 'TYPING',
+            data: { conversationId, userId, typing }
+          }, userId); // exclude sender
+          break;
+        }
+        case 'MARK_READ': {
+          const { conversationId } = message.data;
+          const conv = conversations.get(conversationId);
+          if (conv) {
+            // Reset unread (simplified: reset both since we don't know role from WS)
+            const msgs = conversationMessages.get(conversationId) || [];
+            msgs.forEach(m => {
+              if (m.senderId !== userId && m.status !== 'READ') {
+                m.status = 'READ';
+                m.readAt = new Date().toISOString();
+              }
+            });
+            broadcastToConversation(conversationId, {
+              type: 'READ_RECEIPT',
+              data: { conversationId, userId, readAt: new Date().toISOString() }
+            });
+          }
+          break;
+        }
+        case 'PING': {
+          ws.send(JSON.stringify({ type: 'PONG', data: { timestamp: Date.now() } }));
+          break;
+        }
+      }
+    } catch (err) {
+      console.error('WebSocket message parse error:', err.message);
+    }
+  });
+
+  ws.on('close', () => {
+    if (userId && wsConnections.has(userId)) {
+      wsConnections.get(userId).delete(ws);
+      if (wsConnections.get(userId).size === 0) {
+        wsConnections.delete(userId);
+      }
+      console.log(`WebSocket disconnected: user ${userId}`);
+    }
+  });
+
+  ws.on('error', (err) => {
+    console.error('WebSocket error:', err.message);
+  });
+});
+
+// Broadcast to all WebSocket clients (for a conversation)
+function broadcastToConversation(conversationId, payload, excludeUserId) {
+  const msg = JSON.stringify(payload);
+  wss.clients.forEach(client => {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      client.send(msg);
+    }
+  });
+}
+
+// Start server with WebSocket support
+server.listen(PORT, () => {
   console.log(`Mock backend running on http://localhost:${PORT}`);
+  console.log(`WebSocket server running on ws://localhost:${PORT}/ws`);
   console.log(`Gemini AI: ${GEMINI_API_KEY ? 'CONFIGURED (live)' : 'NOT CONFIGURED (using fallback responses)'}`);
+  console.log(`Seeded ${conversations.size} demo conversations with messages`);
 });

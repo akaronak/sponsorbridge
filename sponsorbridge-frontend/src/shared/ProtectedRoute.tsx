@@ -28,13 +28,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // RBAC check
+  // Helper: determine the correct dashboard for the user's role
+  const homePath = user?.role === 'COMPANY' ? '/company' : '/dashboard';
+
+  // RBAC check — single required role
   if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={homePath} replace />;
   }
 
+  // RBAC check — multiple allowed roles
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={homePath} replace />;
   }
 
   return <>{children}</>;

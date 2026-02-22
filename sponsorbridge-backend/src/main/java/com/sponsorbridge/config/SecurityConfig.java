@@ -58,6 +58,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/companies/{id}").permitAll()
                         .requestMatchers("/api/organizers/{id}").permitAll()
 
+                        // WebSocket endpoints (auth handled at STOMP level)
+                        .requestMatchers("/ws/**").permitAll()
+
+                        // Conversation & messaging endpoints
+                        .requestMatchers("/api/conversations/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
+
                         // Company endpoints - require COMPANY role
                         .requestMatchers(HttpMethod.POST, "/api/companies").hasRole("COMPANY")
                         .requestMatchers(HttpMethod.PUT, "/api/companies/{id}").hasRole("COMPANY")

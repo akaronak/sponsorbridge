@@ -19,7 +19,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Contact = lazy(() => import('./pages/Contact'));
 
-// â"€â"€â"€ Dashboard (lazy â€" code-split) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// â"€â"€â"€ Organizer Dashboard (lazy â€" code-split) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const DashboardLayout = lazy(() => import('./dashboard/layout/DashboardLayout'));
 const Overview = lazy(() => import('./dashboard/pages/Overview'));
 const Events = lazy(() => import('./dashboard/pages/Events'));
@@ -28,6 +28,16 @@ const Messages = lazy(() => import('./dashboard/pages/Messages'));
 const Analytics = lazy(() => import('./dashboard/pages/Analytics'));
 const Settings = lazy(() => import('./dashboard/pages/Settings'));
 const AIAssistant = lazy(() => import('./dashboard/modules/ai/AIAssistant'));
+
+// â"€â"€â"€ Company Dashboard (lazy â€" code-split) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+const CompanyLayout = lazy(() => import('./company/layout/CompanyLayout'));
+const CompanyOverview = lazy(() => import('./company/pages/CompanyOverview'));
+const CompanyEvents = lazy(() => import('./company/pages/CompanyEvents'));
+const CompanyApplications = lazy(() => import('./company/pages/CompanyApplications'));
+const CompanyDeals = lazy(() => import('./company/pages/CompanyDeals'));
+const CompanyMessages = lazy(() => import('./company/pages/CompanyMessages'));
+const CompanyAnalytics = lazy(() => import('./company/pages/CompanyAnalytics'));
+const CompanySettings = lazy(() => import('./company/pages/CompanySettings'));
 
 // â"€â"€â"€ Shared â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const NotFound = lazy(() => import('./shared/NotFound'));
@@ -51,11 +61,11 @@ function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/contact" element={<Contact />} />
 
-            {/* â•â•â•â•â•â•â•â• Dashboard (Authenticated) â•â•â•â•â•â•â•â• */}
+            {/* â•â•â•â•â•â•â•â• Organizer Dashboard (Authenticated) â•â•â•â•â•â•â•â• */}
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ORGANIZER', 'ADMIN']}>
                   <DashboardLayout />
                 </ProtectedRoute>
               }
@@ -67,6 +77,24 @@ function App() {
               <Route path="analytics" element={<Analytics />} />
               <Route path="ai" element={<AIAssistant />} />
               <Route path="settings" element={<Settings />} />
+            </Route>
+
+            {/* â•â•â•â•â•â•â•â• Company Dashboard (Authenticated) â•â•â•â•â•â•â•â• */}
+            <Route
+              path="/company"
+              element={
+                <ProtectedRoute>
+                  <CompanyLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<CompanyOverview />} />
+              <Route path="events" element={<CompanyEvents />} />
+              <Route path="applications" element={<CompanyApplications />} />
+              <Route path="deals" element={<CompanyDeals />} />
+              <Route path="messages" element={<CompanyMessages />} />
+              <Route path="analytics" element={<CompanyAnalytics />} />
+              <Route path="settings" element={<CompanySettings />} />
             </Route>
 
             {/* â•â•â•â•â•â•â•â• 404 â•â•â•â•â•â•â•â• */}

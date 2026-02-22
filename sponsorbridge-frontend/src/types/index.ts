@@ -129,34 +129,93 @@ export interface SponsorshipRequest {
   updatedAt: string;
 }
 
-// â"€â"€â"€ Messages â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ——— Messages & Real-Time Messaging ————————————————————————
+
+export type MessageType = 'TEXT' | 'PROPOSAL' | 'COUNTER_OFFER' | 'SYSTEM_EVENT' | 'DEAL_ACCEPTED' | 'DEAL_REJECTED' | 'FILE_ATTACHMENT';
+export type MessageStatus = 'SENT' | 'DELIVERED' | 'READ';
+export type ConversationStatus = 'ACTIVE' | 'ARCHIVED' | 'CLOSED';
 
 export interface Message {
-  id: string;
-  senderId: string;
+  id: string | number;
+  conversationId: string | number;
+  senderId: string | number;
   senderName: string;
+  senderRole: UserRole;
   senderAvatar?: string;
-  receiverId: string;
-  receiverName: string;
+  messageType: MessageType;
   content: string;
-  read: boolean;
+  status: MessageStatus;
+  // Proposal fields
+  proposalAmount?: number;
+  sponsorshipType?: string;
+  proposalTerms?: string;
+  goodiesDescription?: string;
+  proposalDeadline?: string;
+  parentMessageId?: string | number | null;
+  // Attachment
+  attachmentUrl?: string;
+  attachmentName?: string;
+  // Metadata
+  metadata?: string;
+  edited?: boolean;
+  deliveredAt?: string;
+  readAt?: string;
   createdAt: string;
 }
 
 export interface Conversation {
-  id: string;
-  participantId: string;
-  participantName: string;
-  participantAvatar?: string;
-  participantRole: UserRole;
-  lastMessage: string;
+  id: string | number;
+  companyId?: string | number;
+  companyName?: string;
+  organizerId?: string | number;
+  organizerName?: string;
+  eventName: string;
+  subject?: string;
+  status: ConversationStatus;
+  lastMessagePreview: string;
   lastMessageAt: string;
   unreadCount: number;
+  participantId: string | number;
+  participantName: string;
+  participantRole: UserRole;
+  participantAvatar?: string;
+  createdAt: string;
 }
 
 export interface SendMessagePayload {
-  receiverId: string;
   content: string;
+  messageType?: MessageType;
+  proposalAmount?: number;
+  sponsorshipType?: string;
+  proposalTerms?: string;
+  goodiesDescription?: string;
+  proposalDeadline?: string;
+  parentMessageId?: string | number;
+}
+
+export interface CreateConversationPayload {
+  participantId: string | number;
+  eventName: string;
+  subject?: string;
+  initialMessage?: string;
+}
+
+export interface TypingIndicator {
+  conversationId: string | number;
+  userId: string | number;
+  userName?: string;
+  typing: boolean;
+}
+
+export interface ReadReceipt {
+  conversationId: string | number;
+  userId: string | number;
+  readAt: string;
+}
+
+export interface WebSocketMessage {
+  type: 'NEW_MESSAGE' | 'TYPING' | 'READ_RECEIPT' | 'CONNECTED' | 'AUTH_ERROR' | 'PONG';
+  data: unknown;
 }
 
 // â"€â"€â"€ Analytics â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
@@ -258,4 +317,159 @@ export interface ApiError {
   message: string;
   status: number;
   errors?: Record<string, string[]>;
+}
+
+// ——— Company Dashboard ———————————————————————————————
+
+export type SponsorshipType = 'MONETARY' | 'GOODIES' | 'HYBRID';
+export type ProposalStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+export type CredibilityLevel = 'HIGH' | 'MODERATE' | 'NEW';
+export type DealStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export type IndustryType = 'TECHNOLOGY' | 'FINANCE' | 'HEALTHCARE' | 'EDUCATION' | 'ENTERTAINMENT' | 'RETAIL' | 'FOOD_BEVERAGE' | 'SPORTS' | 'AUTOMOTIVE' | 'OTHER';
+
+export interface CredibilityScore {
+  overall: number;            // 0-100
+  level: CredibilityLevel;
+  factors: {
+    pastPerformance: number;  // 0-25
+    dealCompletion: number;   // 0-25
+    responseTime: number;     // 0-20
+    audienceVerified: number; // 0-15
+    ratings: number;          // 0-15
+  };
+  totalEvents: number;
+  completedDeals: number;
+  avgRating: number;
+}
+
+export interface DiscoverableEvent {
+  id: string;
+  title: string;
+  description: string;
+  category: EventCategory;
+  status: EventStatus;
+  organizerId: string;
+  organizerName: string;
+  organizerAvatar?: string;
+  date: string;
+  endDate?: string;
+  location: string;
+  expectedAttendees: number;
+  budgetRequired: number;
+  sponsorshipType: SponsorshipType;
+  sponsorshipGoal: number;
+  sponsorshipRaised: number;
+  applicationDeadline: string;
+  tags: string[];
+  industry: IndustryType;
+  imageUrl?: string;
+  credibility: CredibilityScore;
+  createdAt: string;
+}
+
+export interface CompanyStats {
+  totalRequests: number;
+  activePartnerships: number;
+  upcomingSponsored: number;
+  responseRate: number;
+  avgDealValue: number;
+  totalInvested: number;
+  pendingProposals: number;
+  acceptedProposals: number;
+  rejectedProposals: number;
+  investmentGrowth: number;
+}
+
+export interface Proposal {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  companyId: string;
+  companyName: string;
+  organizerId: string;
+  organizerName: string;
+  monetaryOffer: number;
+  goodiesDescription?: string;
+  conditions?: string;
+  brandingExpectations?: string;
+  negotiationDeadline: string;
+  status: ProposalStatus;
+  counterOffer?: {
+    amount: number;
+    message: string;
+    createdAt: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NegotiationThread {
+  id: string;
+  proposalId: string;
+  messages: NegotiationMessage[];
+  status: ProposalStatus;
+  createdAt: string;
+}
+
+export interface NegotiationMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  content: string;
+  attachments?: string[];
+  createdAt: string;
+}
+
+export interface Deal {
+  id: string;
+  proposalId: string;
+  eventId: string;
+  eventTitle: string;
+  companyId: string;
+  companyName: string;
+  organizerId: string;
+  organizerName: string;
+  agreedAmount: number;
+  sponsorshipType: SponsorshipType;
+  tier?: SponsorTier;
+  status: DealStatus;
+  agreedTerms?: string;
+  startDate: string;
+  endDate: string;
+  deliverables: { id: string; label: string; completed: boolean }[];
+  createdAt: string;
+}
+
+export interface EventFilter {
+  search?: string;
+  eventType?: EventCategory[];
+  industry?: IndustryType[];
+  location?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  sponsorshipType?: SponsorshipType[];
+  audienceMin?: number;
+  audienceMax?: number;
+  credibilityLevel?: CredibilityLevel[];
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: 'date' | 'budget' | 'audience' | 'credibility' | 'deadline';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface CompanyProfile {
+  id: string;
+  companyName: string;
+  industry: IndustryType;
+  description: string;
+  website?: string;
+  logoUrl?: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string;
+  budget: number;
+  interests: EventCategory[];
+  preferredSponsorshipTypes: SponsorshipType[];
+  createdAt: string;
 }

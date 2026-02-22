@@ -8,12 +8,16 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Determine correct home based on user role
+  const getHomePath = (role?: string) => (role === 'COMPANY' ? '/company' : '/dashboard');
+
   // Redirect if already logged in
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname || getHomePath(user?.role);
   if (isAuthenticated) {
     navigate(from, { replace: true });
   }
@@ -25,7 +29,13 @@ const Login: React.FC = () => {
 
     try {
       await login({ email, password });
-      navigate(from, { replace: true });
+      // After login, read user from localStorage to get role
+      const storedUser = localStorage.getItem('sb_user');
+      const loggedUser = storedUser ? JSON.parse(storedUser) : null;
+      const target =
+        (location.state as { from?: { pathname: string } })?.from?.pathname ||
+        getHomePath(loggedUser?.role);
+      navigate(target, { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
       const errorMessage =

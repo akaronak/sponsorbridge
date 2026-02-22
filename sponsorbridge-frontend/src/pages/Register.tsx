@@ -23,8 +23,9 @@ const Register: React.FC = () => {
     try {
       await register({ email, name, password, role: role as 'ORGANIZER' | 'COMPANY' });
       setSuccess('Account created successfully! Redirecting...');
+      const target = role === 'COMPANY' ? '/company' : '/dashboard';
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate(target);
       }, 1500);
     } catch (err: any) {
       console.error('Registration error:', err);
