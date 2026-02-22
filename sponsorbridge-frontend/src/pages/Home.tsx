@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { User, LogOut, Menu, X } from 'lucide-react';
-import Hero from '../components/Hero';
+import PremiumHero from '../components/PremiumHero';
 import Features from '../components/Features';
 import SocialProof from '../components/SocialProof';
 import HowItWorks from '../components/HowItWorks';
@@ -80,7 +80,7 @@ const Home: React.FC = () => {
 
 
       {/* Landing Page Components */}
-      <Hero />
+      <PremiumHero />
       <Features />
       <SocialProof />
       <HowItWorks />
