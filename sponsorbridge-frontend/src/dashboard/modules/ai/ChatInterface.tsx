@@ -38,7 +38,7 @@ const WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
   content:
-    "Hello! I'm your SponsorBridge AI Assistant powered by Gemini. I can help you find ideal sponsors, optimize your event listings, analyze market trends, and draft professional proposals. What would you like to work on today?",
+    "Hello! I'm your Eventra AI Assistant powered by Gemini. I can help you find ideal sponsors, optimize your event listings, analyze market trends, and draft professional proposals. What would you like to work on today?",
   timestamp: new Date().toISOString(),
   actions: [
     { id: 'a1', label: 'Find sponsors for my event', type: 'MATCH_SPONSOR' },

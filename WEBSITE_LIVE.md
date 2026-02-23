@@ -1,8 +1,8 @@
-# 🎉 SponsorBridge Website is LIVE!
+# 🎉 Eventra Website is LIVE!
 
 ## ✅ Status: Running
 
-Your SponsorBridge website is now fully deployed and running!
+Your Eventra website is now fully deployed and running!
 
 ---
 
@@ -248,7 +248,7 @@ Press `Ctrl+C` in the terminal
 Edit `public/index.html` - Look for the `<style>` section
 
 ### Change Company Name
-Edit `public/index.html` - Look for "SponsorBridge" text
+Edit `public/index.html` - Look for "Eventra" text
 
 ### Add New Features
 Edit `public/app.js` - Add new functions and API calls
@@ -272,7 +272,7 @@ If you encounter any issues:
 
 ## 🎉 Congratulations!
 
-Your SponsorBridge website is live and ready to use!
+Your Eventra website is live and ready to use!
 
 **Visit:** http://localhost:3000
 

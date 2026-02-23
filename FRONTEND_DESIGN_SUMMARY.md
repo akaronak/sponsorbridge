@@ -1,8 +1,8 @@
-# SponsorBridge Frontend - Modern SaaS Design
+# Eventra Frontend - Modern SaaS Design
 
 ## ✅ Completed
 
-I've created a **premium, modern SaaS homepage** for SponsorBridge with professional design inspired by Stripe, Notion, and Linear.
+I've created a **premium, modern SaaS homepage** for Eventra with professional design inspired by Stripe, Notion, and Linear.
 
 ---
 
@@ -120,7 +120,7 @@ Borders:     Gray 200 (#e5e7eb)
 
 ### Install Dependencies
 ```bash
-cd sponsorbridge-frontend
+cd Eventra-frontend
 npm install
 ```
 
@@ -180,7 +180,7 @@ npm run preview
 ## 📁 File Structure
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── pages/
 │   │   └── Home.tsx              # Homepage component
@@ -374,7 +374,7 @@ Create new components and import in `Home.tsx`.
 - [Vite Guide](https://vitejs.dev)
 - [Tailwind CSS](https://tailwindcss.com)
 - [Lucide Icons](https://lucide.dev)
-- [Design System](./sponsorbridge-frontend/DESIGN_SYSTEM.md)
+- [Design System](./Eventra-frontend/DESIGN_SYSTEM.md)
 
 ---
 

@@ -552,7 +552,7 @@ onMouseLeave={() => {
 ## File Locations
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── components/
 │   │   ├── FeaturesShowcase.tsx      (NEW - 300+ lines)

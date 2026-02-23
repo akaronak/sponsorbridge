@@ -58,7 +58,7 @@ const Sidebar: React.FC = () => {
           </div>
           {!collapsed && (
             <span className="text-lg font-bold bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent whitespace-nowrap">
-              SponsorBridge
+              Eventra
             </span>
           )}
         </div>

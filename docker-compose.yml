@@ -3,9 +3,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: sponsorbridge-db
+    container_name: Eventra-db
     environment:
-      POSTGRES_DB: sponsorbridge
+      POSTGRES_DB: Eventra
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:

@@ -1,13 +1,13 @@
-# SponsorBridge Setup Guide
+# Eventra Setup Guide
 
-Complete setup instructions for the SponsorBridge platform.
+Complete setup instructions for the Eventra platform.
 
 ## Project Structure
 
 ```
-sponsorbridge/
-├── sponsorbridge-backend/    # Spring Boot API
-├── sponsorbridge-frontend/   # React frontend
+Eventra/
+├── Eventra-backend/    # Spring Boot API
+├── Eventra-frontend/   # React frontend
 ├── docker-compose.yml        # PostgreSQL setup
 └── SETUP_GUIDE.md           # This file
 ```
@@ -31,20 +31,20 @@ docker-compose up -d
 ```
 
 This will start PostgreSQL on `localhost:5432` with:
-- Database: `sponsorbridge`
+- Database: `Eventra`
 - Username: `postgres`
 - Password: `postgres`
 
 #### Option B: Manual PostgreSQL Setup
 
 ```sql
-CREATE DATABASE sponsorbridge;
+CREATE DATABASE Eventra;
 ```
 
 ### 2. Backend Setup
 
 ```bash
-cd sponsorbridge-backend
+cd Eventra-backend
 
 # Copy environment file
 cp .env.example .env.local
@@ -64,7 +64,7 @@ Backend will be available at: `http://localhost:8080`
 ### 3. Frontend Setup
 
 ```bash
-cd sponsorbridge-frontend
+cd Eventra-frontend
 
 # Install dependencies
 npm install
@@ -82,11 +82,11 @@ Frontend will be available at: `http://localhost:5173`
 
 ### Backend Configuration
 
-Edit `sponsorbridge-backend/src/main/resources/application.properties`:
+Edit `Eventra-backend/src/main/resources/application.properties`:
 
 ```properties
 # Database
-spring.datasource.url=jdbc:postgresql://localhost:5432/sponsorbridge
+spring.datasource.url=jdbc:postgresql://localhost:5432/Eventra
 spring.datasource.username=postgres
 spring.datasource.password=postgres
 
@@ -102,7 +102,7 @@ cloudinary.api-secret=your_api_secret
 
 ### Frontend Configuration
 
-Edit `sponsorbridge-frontend/.env.local`:
+Edit `Eventra-frontend/.env.local`:
 
 ```
 VITE_API_BASE_URL=http://localhost:8080
@@ -113,8 +113,8 @@ VITE_API_BASE_URL=http://localhost:8080
 ### Backend
 
 ```
-sponsorbridge-backend/
-├── src/main/java/com/sponsorbridge/
+Eventra-backend/
+├── src/main/java/com/Eventra/
 │   ├── controller/       # REST endpoints
 │   ├── service/          # Business logic
 │   ├── repository/       # Data access
@@ -124,7 +124,7 @@ sponsorbridge-backend/
 │   ├── config/           # Spring config
 │   ├── exception/        # Custom exceptions
 │   └── util/             # Utilities
-├── src/test/java/com/sponsorbridge/
+├── src/test/java/com/Eventra/
 │   ├── unit/             # Unit tests
 │   └── property/         # Property-based tests
 ├── pom.xml               # Maven configuration
@@ -134,7 +134,7 @@ sponsorbridge-backend/
 ### Frontend
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── components/       # Reusable components
 │   ├── pages/            # Page components
@@ -157,7 +157,7 @@ sponsorbridge-frontend/
 ### Backend Tests
 
 ```bash
-cd sponsorbridge-backend
+cd Eventra-backend
 
 # Run all tests
 mvn test
@@ -172,7 +172,7 @@ mvn test jacoco:report
 ### Frontend Tests
 
 ```bash
-cd sponsorbridge-frontend
+cd Eventra-frontend
 
 # Run tests (when configured)
 npm run test
@@ -184,8 +184,8 @@ npm run lint
 ## Development Workflow
 
 1. Start PostgreSQL: `docker-compose up -d`
-2. Start backend: `cd sponsorbridge-backend && mvn spring-boot:run`
-3. Start frontend: `cd sponsorbridge-frontend && npm run dev`
+2. Start backend: `cd Eventra-backend && mvn spring-boot:run`
+3. Start frontend: `cd Eventra-frontend && npm run dev`
 4. Access frontend at `http://localhost:5173`
 5. API available at `http://localhost:8080`
 
@@ -231,7 +231,7 @@ npm install
 2. Set strong JWT secret
 3. Configure Cloudinary credentials
 4. Build: `mvn clean package`
-5. Run: `java -jar target/sponsorbridge-backend-1.0.0.jar`
+5. Run: `java -jar target/Eventra-backend-1.0.0.jar`
 
 ### Frontend
 
@@ -249,7 +249,7 @@ npm install
 ## Support
 
 For issues or questions, refer to:
-- Backend: `sponsorbridge-backend/README.md`
-- Frontend: `sponsorbridge-frontend/README_SETUP.md`
+- Backend: `Eventra-backend/README.md`
+- Frontend: `Eventra-frontend/README_SETUP.md`
 - Design: `.kiro/specs/sponsor-bridge/design.md`
 - Requirements: `.kiro/specs/sponsor-bridge/requirements.md`

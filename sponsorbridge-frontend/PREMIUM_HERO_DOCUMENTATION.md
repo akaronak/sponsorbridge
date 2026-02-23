@@ -1,4 +1,4 @@
-# SponsorBridge Premium Hero Section - Implementation Guide
+# Eventra Premium Hero Section - Implementation Guide
 
 ## Overview
 
@@ -455,7 +455,7 @@ If serving from CDN, ensure:
 ## File Locations
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── components/
 │   │   ├── PremiumHero.tsx        (NEW)

@@ -1,4 +1,4 @@
-# 🚀 SponsorBridge Frontend - Phase 1 & 2 Complete
+# 🚀 Eventra Frontend - Phase 1 & 2 Complete
 
 **Status:** ✅ **PRODUCTION READY**  
 **Date:** February 21, 2026
@@ -7,7 +7,7 @@
 
 ## What You Have
 
-A **premium SaaS landing page** with two professionally-animated sections showcasing the SponsorBridge platform to potential sponsors and event organizers:
+A **premium SaaS landing page** with two professionally-animated sections showcasing the Eventra platform to potential sponsors and event organizers:
 
 ### Phase 1: Premium Hero Section ✅
 - Cinematic headline with word-by-word staggered reveal
@@ -44,7 +44,7 @@ A **premium SaaS landing page** with two professionally-animated sections showca
 ## File Structure
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── components/
 │   │   ├── PremiumHero.tsx              (Phase 1 - 350 lines) ✅

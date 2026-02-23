@@ -2,7 +2,7 @@
 
 ## 🎬 What Was Built
 
-A **cinematic, production-grade hero section** for SponsorBridge that matches the visual standards of Series A/B funded startups (Stripe, Linear, Framer style).
+A **cinematic, production-grade hero section** for Eventra that matches the visual standards of Series A/B funded startups (Stripe, Linear, Framer style).
 
 ### Core Deliverables
 

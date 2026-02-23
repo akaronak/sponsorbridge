@@ -7,7 +7,7 @@
 
 ## Overview
 
-A **cinematic scroll-driven workflow timeline** that communicates the SponsorBridge sponsorship process through intelligent motion, glassmorphic design, and camera-guided storytelling.
+A **cinematic scroll-driven workflow timeline** that communicates the Eventra sponsorship process through intelligent motion, glassmorphic design, and camera-guided storytelling.
 
 **Core Concept:** As users scroll, the timeline reveals itself like a story unfolding—connector lines animate, cards activate sequentially, and the visual hierarchy emphasizes progression from event creation to deal closure.
 
@@ -672,7 +672,7 @@ export default function Home() {
 ## File Locations
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── components/
 │   │   ├── WorkflowTimeline.tsx    (NEW - 400+ lines)

@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { getDashboardPath } from '../config/roles';
+import type { UserRole } from '../types';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('ORGANIZER');
+  const [role, setRole] = useState<UserRole>('ORGANIZER');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,11 +23,11 @@ const Register: React.FC = () => {
     setSuccess('');
 
     try {
-      await register({ email, name, password, role: role as 'ORGANIZER' | 'COMPANY' });
+      const registeredUser = await register({ email, name, password, role });
       setSuccess('Account created successfully! Redirecting...');
-      const target = role === 'COMPANY' ? '/company' : '/dashboard';
+      const target = getDashboardPath(registeredUser.role);
       setTimeout(() => {
-        navigate(target);
+        navigate(target, { replace: true });
       }, 1500);
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -47,7 +49,7 @@ const Register: React.FC = () => {
 
         <div className="bg-gradient-to-br from-purple-600/40 to-purple-700/40 backdrop-blur-xl rounded-3xl p-8 border border-purple-400/30">
           <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-purple-200 mb-8">Join SponsorBridge today</p>
+          <p className="text-purple-200 mb-8">Join Eventra today</p>
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6">

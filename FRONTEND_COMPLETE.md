@@ -1,4 +1,4 @@
-# 🎨 SponsorBridge Frontend - Modern SaaS Design Complete
+# 🎨 Eventra Frontend - Modern SaaS Design Complete
 
 ## ✅ Project Status: COMPLETE
 
@@ -128,7 +128,7 @@ Border Gray:     #e5e7eb (Gray 200)
 
 ### Step 1: Install Dependencies
 ```bash
-cd sponsorbridge-frontend
+cd Eventra-frontend
 npm install
 ```
 
@@ -156,7 +156,7 @@ npm run preview
 ## 📁 Project Structure
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── pages/
 │   │   └── Home.tsx              # Homepage component
@@ -363,7 +363,7 @@ npm run build
 
 ## 🎉 You're Ready!
 
-Your SponsorBridge frontend is complete and ready to use:
+Your Eventra frontend is complete and ready to use:
 
 1. **Install:** `npm install`
 2. **Develop:** `npm run dev`

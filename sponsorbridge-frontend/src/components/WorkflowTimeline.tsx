@@ -221,7 +221,7 @@ const WorkflowTimeline: React.FC = () => {
       {/* Section header */}
       <div className="relative max-w-5xl mx-auto mb-32 text-center">
         <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-          How SponsorBridge Powers Every Deal
+          How Eventra Powers Every Deal
         </h2>
         <p className="text-lg md:text-xl text-slate-300">
           From event creation to deal closure â€" intelligently managed.

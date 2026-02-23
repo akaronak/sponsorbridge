@@ -19,7 +19,7 @@ const Privacy: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">1. Introduction</h2>
               <p>
-                SponsorBridge ("we", "our", or "us") operates the SponsorBridge website and application. This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service.
+                Eventra ("we", "our", or "us") operates the Eventra website and application. This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service.
               </p>
             </section>
 
@@ -47,13 +47,13 @@ const Privacy: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">5. Your Rights</h2>
               <p>
-                You have the right to access, correct, or delete your personal data. You may also request a copy of your data or restrict our processing. To exercise these rights, please contact us at privacy@sponsorbridge.app.
+                You have the right to access, correct, or delete your personal data. You may also request a copy of your data or restrict our processing. To exercise these rights, please contact us at privacy@eventra.app.
               </p>
             </section>
 
             <div className="mt-12 p-6 bg-slate-800/50 rounded-lg border border-slate-700">
               <p className="text-sm">
-                For questions about this Privacy Policy, contact us at <a href="mailto:privacy@sponsorbridge.app" className="text-indigo-400 hover:text-indigo-300">privacy@sponsorbridge.app</a>
+                For questions about this Privacy Policy, contact us at <a href="mailto:privacy@eventra.app" className="text-indigo-400 hover:text-indigo-300">privacy@eventra.app</a>
               </p>
             </div>
           </div>

@@ -32,8 +32,8 @@ const Contact: React.FC = () => {
                 <Mail className="w-6 h-6 text-indigo-400 flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="text-white font-semibold mb-1">Email</h3>
-                  <a href="mailto:support@sponsorbridge.app" className="text-slate-400 hover:text-indigo-400 transition">
-                    support@sponsorbridge.app
+                  <a href="mailto:support@eventra.app" className="text-slate-400 hover:text-indigo-400 transition">
+                    support@eventra.app
                   </a>
                 </div>
               </div>
@@ -53,7 +53,7 @@ const Contact: React.FC = () => {
                 <div>
                   <h3 className="text-white font-semibold mb-1">Address</h3>
                   <p className="text-slate-400">
-                    SponsorBridge Inc.<br />
+                    Eventra Inc.<br />
                     123 Market St, Suite 100<br />
                     San Francisco, CA 94102
                   </p>

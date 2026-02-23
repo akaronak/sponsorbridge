@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { getDashboardPath } from '../config/roles';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,13 +13,11 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine correct home based on user role
-  const getHomePath = (role?: string) => (role === 'COMPANY' ? '/company' : '/dashboard');
-
   // Redirect if already logged in
-  const from =
-    (location.state as { from?: { pathname: string } })?.from?.pathname || getHomePath(user?.role);
   if (isAuthenticated) {
+    const from =
+      (location.state as { from?: { pathname: string } })?.from?.pathname ||
+      getDashboardPath(user?.role);
     navigate(from, { replace: true });
   }
 
@@ -28,13 +27,10 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      await login({ email, password });
-      // After login, read user from localStorage to get role
-      const storedUser = localStorage.getItem('sb_user');
-      const loggedUser = storedUser ? JSON.parse(storedUser) : null;
+      const loggedUser = await login({ email, password });
       const target =
         (location.state as { from?: { pathname: string } })?.from?.pathname ||
-        getHomePath(loggedUser?.role);
+        getDashboardPath(loggedUser.role);
       navigate(target, { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
@@ -56,7 +52,7 @@ const Login: React.FC = () => {
 
         <div className="bg-gradient-to-br from-purple-600/40 to-purple-700/40 backdrop-blur-xl rounded-3xl p-8 border border-purple-400/30">
           <h1 className="text-3xl font-bold text-white mb-2">Sign In</h1>
-          <p className="text-purple-200 mb-8">Welcome back to SponsorBridge</p>
+          <p className="text-purple-200 mb-8">Welcome back to Eventra</p>
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6">

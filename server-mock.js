@@ -10,21 +10,41 @@ const JWT_SECRET = 'your-secret-key-change-this';
 // Mock database
 const users = new Map();
 
+// Seed demo users so they survive server restarts
+const seedUsers = [
+  { id: 1, email: 'organizer@demo.com', name: 'Demo Organizer', password: 'demo123', role: 'ORGANIZER' },
+  { id: 2, email: 'company@demo.com', name: 'Demo Company', password: 'demo123', role: 'COMPANY' },
+  { id: 3, email: 'admin@demo.com', name: 'Demo Admin', password: 'admin123', role: 'ADMIN' },
+];
+seedUsers.forEach(u => users.set(u.email, u));
+console.log(`Seeded ${seedUsers.length} demo users: ${seedUsers.map(u => u.email).join(', ')}`);
+
 app.post('/api/auth/register', (req, res) => {
   const { email, name, password, role } = req.body;
   
   if (!email || !password || !name) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
   
   if (users.has(email)) {
     return res.status(409).json({ error: 'Email already registered' });
   }
+
+  // Only allow ORGANIZER and COMPANY roles via self-registration
+  const allowedRoles = ['ORGANIZER', 'COMPANY'];
+  const normalizedRole = (role || 'ORGANIZER').toUpperCase();
+  if (!allowedRoles.includes(normalizedRole)) {
+    return res.status(400).json({ error: 'Invalid role. Allowed: ORGANIZER, COMPANY' });
+  }
   
-  const user = { id: Date.now(), email, name, password, role: role || 'ORGANIZER' };
+  const user = { id: Date.now(), email, name, password, role: normalizedRole };
   users.set(email, user);
   
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET);
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
   
   res.status(201).json({
     message: 'Registration successful',
@@ -43,10 +63,12 @@ app.post('/api/auth/login', (req, res) => {
   const user = users.get(email);
   
   if (!user || user.password !== password) {
+    console.log(`Login failed for ${email} — user ${user ? 'found' : 'NOT found'} (${users.size} users in store)`);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET);
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+  console.log(`Login successful for ${email} (role: ${user.role})`);
   
   res.json({
     token,
@@ -74,7 +96,7 @@ app.get('/api/auth/validate', (req, res) => {
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyBoHJHbqbTqFgSdVnJ37_w5B_9B4Bdlxlw';
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-const SYSTEM_PROMPT = `You are SponsorBridge AI, a specialized assistant for a sponsorship management platform.
+const SYSTEM_PROMPT = `You are Eventra AI, a specialized assistant for a sponsorship management platform.
 Your capabilities:
 1. Provide sponsorship recommendations with specific company matches
 2. Calculate compatibility scores (0-100) between events and sponsors
@@ -100,7 +122,7 @@ function getFallbackResponse(message, history) {
   // ── Greeting / Small talk ──────────────────────────────────
   if (/^(hi|hello|hey|good\s*(morning|afternoon|evening)|greetings|what'?s?\s*up|howdy)\b/.test(lower) && words.length <= 6) {
     return {
-      reply: "Hello! Welcome to SponsorBridge AI. I'm here to help you with everything sponsorship-related.\n\nHere's what I can do for you:\n\n1. **Find & match sponsors** for your events\n2. **Optimize event listings** to attract more sponsors\n3. **Draft professional proposals** for outreach\n4. **Analyze market trends** and pricing strategies\n5. **Advise on negotiation** and deal structures\n6. **Help with event planning** and attendee growth\n\nWhat would you like to explore?",
+      reply: "Hello! Welcome to Eventra AI. I'm here to help you with everything sponsorship-related.\n\nHere's what I can do for you:\n\n1. **Find & match sponsors** for your events\n2. **Optimize event listings** to attract more sponsors\n3. **Draft professional proposals** for outreach\n4. **Analyze market trends** and pricing strategies\n5. **Advise on negotiation** and deal structures\n6. **Help with event planning** and attendee growth\n\nWhat would you like to explore?",
       compatibilityScore: null
     };
   }
@@ -116,7 +138,7 @@ function getFallbackResponse(message, history) {
   // ── Who are you / What can you do ──────────────────────────
   if (/who\s*are\s*you|what\s*can\s*you\s*do|what\s*are\s*you|your\s*capabilities|help\s*me|how\s*do\s*you\s*work/.test(lower)) {
     return {
-      reply: "I'm **SponsorBridge AI**, your intelligent sponsorship management assistant.\n\n**My capabilities:**\n\n1. **Sponsor Matching** -- I analyze your event profile and recommend companies with the highest compatibility scores\n2. **Event Optimization** -- I review your listings and suggest improvements to attract more sponsors\n3. **Proposal Drafting** -- I create professional, customized sponsorship proposals\n4. **Market Analysis** -- I provide trends, benchmarks, and pricing insights\n5. **Negotiation Coaching** -- I offer strategies for closing better deals\n6. **ROI Forecasting** -- I estimate potential returns from sponsorship partnerships\n\nTry asking me something like:\n- *\"Find sponsors for my tech hackathon\"*\n- *\"How should I price my sponsorship tiers?\"*\n- *\"Draft a proposal for a fintech company\"*",
+      reply: "I'm **Eventra AI**, your intelligent sponsorship management assistant.\n\n**My capabilities:**\n\n1. **Sponsor Matching** -- I analyze your event profile and recommend companies with the highest compatibility scores\n2. **Event Optimization** -- I review your listings and suggest improvements to attract more sponsors\n3. **Proposal Drafting** -- I create professional, customized sponsorship proposals\n4. **Market Analysis** -- I provide trends, benchmarks, and pricing insights\n5. **Negotiation Coaching** -- I offer strategies for closing better deals\n6. **ROI Forecasting** -- I estimate potential returns from sponsorship partnerships\n\nTry asking me something like:\n- *\"Find sponsors for my tech hackathon\"*\n- *\"How should I price my sponsorship tiers?\"*\n- *\"Draft a proposal for a fintech company\"*",
       compatibilityScore: null
     };
   }
@@ -224,7 +246,7 @@ function getFallbackResponse(message, history) {
   // ── Attendance / Growth / Promotion / Marketing ────────────
   if (/attend|audience|grow|growth|promot|marketing|boost|increase|attract|reach\s*(out|more|people)|engagement|turnout|registra|sign.?up|ticket/.test(lower)) {
     return {
-      reply: "Here are **proven strategies to increase event attendance** and engagement:\n\n### Pre-Event (4-8 weeks before)\n1. **Early-bird pricing** -- Offer 20-30% discounts for first 100 registrations\n2. **Social proof** -- Share speaker announcements, sponsor logos, and RSVP count\n3. **Referral incentives** -- \"Bring 3 friends, get VIP upgrade free\"\n4. **Content marketing** -- Publish blog posts, teasers, and behind-the-scenes on social media\n\n### During Registration\n5. **Simplify sign-up** -- Reduce form fields; under 5 fields = 34% higher completion\n6. **Mobile-first** -- 68% of event registrations happen on mobile\n7. **Partner cross-promotion** -- Ask sponsors to share with their networks\n\n### Engagement Boosters\n8. **Gamification** -- Leaderboards, challenges, and prizes\n9. **Networking features** -- Attendee matching, breakout rooms\n10. **Live polling & Q&A** -- Increases dwell time by 40%\n\n**Benchmark:** Top events on SponsorBridge see 2-3x attendance growth after optimizing their listings.\n\nWant me to review your specific event listing for improvement opportunities?",
+      reply: "Here are **proven strategies to increase event attendance** and engagement:\n\n### Pre-Event (4-8 weeks before)\n1. **Early-bird pricing** -- Offer 20-30% discounts for first 100 registrations\n2. **Social proof** -- Share speaker announcements, sponsor logos, and RSVP count\n3. **Referral incentives** -- \"Bring 3 friends, get VIP upgrade free\"\n4. **Content marketing** -- Publish blog posts, teasers, and behind-the-scenes on social media\n\n### During Registration\n5. **Simplify sign-up** -- Reduce form fields; under 5 fields = 34% higher completion\n6. **Mobile-first** -- 68% of event registrations happen on mobile\n7. **Partner cross-promotion** -- Ask sponsors to share with their networks\n\n### Engagement Boosters\n8. **Gamification** -- Leaderboards, challenges, and prizes\n9. **Networking features** -- Attendee matching, breakout rooms\n10. **Live polling & Q&A** -- Increases dwell time by 40%\n\n**Benchmark:** Top events on Eventra see 2-3x attendance growth after optimizing their listings.\n\nWant me to review your specific event listing for improvement opportunities?",
       compatibilityScore: null
     };
   }

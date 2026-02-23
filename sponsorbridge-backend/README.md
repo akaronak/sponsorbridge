@@ -1,6 +1,6 @@
-# SponsorBridge Backend
+# Eventra Backend
 
-Spring Boot REST API for the SponsorBridge platform.
+Spring Boot REST API for the Eventra platform.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ Spring Boot REST API for the SponsorBridge platform.
 Create a PostgreSQL database:
 
 ```sql
-CREATE DATABASE sponsorbridge;
+CREATE DATABASE eventra;
 ```
 
 ### 2. Configuration
@@ -23,7 +23,7 @@ CREATE DATABASE sponsorbridge;
 Update `src/main/resources/application.properties` with your database credentials:
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/sponsorbridge
+spring.datasource.url=jdbc:postgresql://localhost:5432/eventra
 spring.datasource.username=your_username
 spring.datasource.password=your_password
 ```
@@ -51,7 +51,7 @@ The API will be available at `http://localhost:8080`
 ## Project Structure
 
 ```
-src/main/java/com/sponsorbridge/
+src/main/java/com/eventra/
 ├── controller/       # REST API endpoints
 ├── service/          # Business logic
 ├── repository/       # Data access layer
@@ -62,7 +62,7 @@ src/main/java/com/sponsorbridge/
 ├── exception/        # Custom exceptions
 └── util/             # Utility classes
 
-src/test/java/com/sponsorbridge/
+src/test/java/com/eventra/
 ├── unit/             # Unit tests
 └── property/         # Property-based tests
 ```

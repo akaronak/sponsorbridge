@@ -26,7 +26,7 @@
 ### 3. ✅ Environment Variables (`.env.development` & `.env.production`)
 - `VITE_API_URL` allows different backend URLs per environment
 - Development: `http://localhost:8080`
-- Production: `https://api.sponsorbridge.com` (configurable)
+- Production: `https://api.Eventra.com` (configurable)
 
 ### 4. ✅ Updated Register & Login Components
 - Replaced `fetch()` with Axios service
@@ -65,8 +65,8 @@ Error: Error message displayed
 ## Testing the Fix
 
 ### Quick Test
-1. Start backend: `cd sponsorbridge-backend && mvn spring-boot:run`
-2. Start frontend: `cd sponsorbridge-frontend && npm run dev`
+1. Start backend: `cd Eventra-backend && mvn spring-boot:run`
+2. Start frontend: `cd Eventra-frontend && npm run dev`
 3. Go to `http://localhost:3000/register`
 4. Fill form with valid data
 5. Click "Register"

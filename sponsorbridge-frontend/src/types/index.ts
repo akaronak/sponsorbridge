@@ -1,5 +1,5 @@
 // ============================================================
-// SponsorBridge â€" Core Type Definitions
+// Eventra â€" Core Type Definitions
 // Production-grade type system for the entire platform
 // ============================================================
 

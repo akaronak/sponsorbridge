@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Completed Phase 2 of premium SponsorBridge landing page development: **Scroll-driven feature showcase section with GSAP ScrollTrigger animations, 3D glassmorphic cards, and parallax depth effects.**
+Completed Phase 2 of premium Eventra landing page development: **Scroll-driven feature showcase section with GSAP ScrollTrigger animations, 3D glassmorphic cards, and parallax depth effects.**
 
 This section builds directly on Phase 1 (Premium Hero) to create a cohesive, cinematic product narrative for Series A startup positioning.
 

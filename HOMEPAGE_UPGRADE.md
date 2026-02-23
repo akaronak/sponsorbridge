@@ -1,4 +1,4 @@
-# SponsorBridge Homepage Upgrade - Complete
+# Eventra Homepage Upgrade - Complete
 
 ## 🎨 Design Improvements
 

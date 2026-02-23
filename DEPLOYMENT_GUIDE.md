@@ -1,14 +1,14 @@
-# SponsorBridge - Deployment Guide
+# Eventra - Deployment Guide
 
 ## 🚀 Website is Now Live!
 
-Your SponsorBridge website is running and ready to use.
+Your Eventra website is running and ready to use.
 
 ### Access the Website
 
 **URL:** http://localhost:3000
 
-Open this link in your browser to access the full SponsorBridge platform.
+Open this link in your browser to access the full Eventra platform.
 
 ---
 
@@ -171,6 +171,6 @@ npm start
 
 ## 🎉 You're All Set!
 
-Your SponsorBridge website is ready to use. Visit **http://localhost:3000** to get started!
+Your Eventra website is ready to use. Visit **http://localhost:3000** to get started!
 
 For any issues or questions, refer to the API documentation above.

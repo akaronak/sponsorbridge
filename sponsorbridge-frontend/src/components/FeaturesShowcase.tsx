@@ -212,7 +212,7 @@ const FeaturesShowcase: React.FC = () => {
               ref={subtextRef}
               className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed"
             >
-              SponsorBridge combines discovery, intelligence, and communication into one powerful workflow.
+              Eventra combines discovery, intelligence, and communication into one powerful workflow.
             </p>
           </div>
 

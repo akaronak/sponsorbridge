@@ -14,7 +14,7 @@ const Features: React.FC = () => {
         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-12">
           <h1 className="text-5xl font-bold text-white mb-6">Features</h1>
           <p className="text-slate-300 text-lg leading-relaxed mb-12">
-            Discover the powerful features that make SponsorBridge the leading sponsorship matching platform for college events.
+            Discover the powerful features that make Eventra the leading sponsorship matching platform for college events.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

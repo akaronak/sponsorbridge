@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useReducer } from 'react';
 import type { AuthState, LoginCredentials, RegisterPayload, User, UserRole } from '../types';
 import { authApi } from '../api/auth';
+import { getDashboardPath } from '../config/roles';
 
 // â"€â"€â"€ Actions â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 type AuthAction =
@@ -41,10 +42,12 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 // â"€â"€â"€ Context Shape â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 export interface AuthContextValue extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
+  register: (payload: RegisterPayload) => Promise<User>;
   logout: () => void;
   hasRole: (role: UserRole) => boolean;
+  /** Resolve the correct dashboard path for the current user's role. */
+  getDashboardPath: () => string;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -85,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('auth:expired', handleExpired);
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<User> => {
     dispatch({ type: 'AUTH_LOADING' });
     try {
       const response = await authApi.login(credentials);
@@ -93,13 +96,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       dispatch({ type: 'AUTH_SUCCESS', payload: { user, token } });
+      return user;
     } catch (error) {
       dispatch({ type: 'AUTH_ERROR' });
       throw error;
     }
   }, []);
 
-  const register = useCallback(async (payload: RegisterPayload) => {
+  const register = useCallback(async (payload: RegisterPayload): Promise<User> => {
     dispatch({ type: 'AUTH_LOADING' });
     try {
       const response = await authApi.register(payload);
@@ -107,6 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       dispatch({ type: 'AUTH_SUCCESS', payload: { user, token } });
+      return user;
     } catch (error) {
       dispatch({ type: 'AUTH_ERROR' });
       throw error;
@@ -125,6 +130,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [state.user]
   );
 
+  const dashboardPath = useCallback(
+    () => getDashboardPath(state.user?.role),
+    [state.user]
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
@@ -132,8 +142,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       register,
       logout,
       hasRole,
+      getDashboardPath: dashboardPath,
     }),
-    [state, login, register, logout, hasRole]
+    [state, login, register, logout, hasRole, dashboardPath]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

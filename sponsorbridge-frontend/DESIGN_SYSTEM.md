@@ -1,8 +1,8 @@
-# SponsorBridge Design System
+# Eventra Design System
 
 ## 🎨 Design Philosophy
 
-SponsorBridge follows modern SaaS design principles inspired by Stripe, Notion, and Linear:
+Eventra follows modern SaaS design principles inspired by Stripe, Notion, and Linear:
 - **Minimal & Clean** - Remove unnecessary elements
 - **Spacious** - Generous whitespace for breathing room
 - **Professional** - Trust-building visual hierarchy

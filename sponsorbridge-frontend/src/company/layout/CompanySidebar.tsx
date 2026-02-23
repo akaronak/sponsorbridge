@@ -60,7 +60,7 @@ const CompanySidebar: React.FC = () => {
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent whitespace-nowrap">
-                SponsorBridge
+                Eventra
               </span>
               <span className="text-[10px] font-medium text-emerald-400/60 uppercase tracking-widest -mt-1">
                 Sponsor Portal

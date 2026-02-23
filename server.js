@@ -11,7 +11,7 @@ const JWT_SECRET = 'your-secret-key-change-this-in-production';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'sponsorbridge-frontend', 'dist')));
+app.use(express.static(path.join(__dirname, 'Eventra-frontend', 'dist')));
 
 // In-memory database
 const db = {
@@ -274,10 +274,10 @@ app.get('/api/messages/request/:requestId', authMiddleware, (req, res) => {
 
 // Serve index.html for all other routes (SPA)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'sponsorbridge-frontend', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'Eventra-frontend', 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 SponsorBridge running at http://localhost:${PORT}`);
+  console.log(`🚀 Eventra running at http://localhost:${PORT}`);
   console.log(`📱 Open your browser and navigate to http://localhost:${PORT}`);
 });

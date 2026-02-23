@@ -1,6 +1,6 @@
-# SponsorBridge - Sponsorship Management Platform
+# Eventra - Sponsorship Management Platform
 
-A comprehensive platform that connects event organizers with companies seeking sponsorship opportunities. SponsorBridge streamlines the sponsorship process by enabling organizers to create and manage sponsorship requests while allowing companies to discover and engage with events.
+A comprehensive platform that connects event organizers with companies seeking sponsorship opportunities. Eventra streamlines the sponsorship process by enabling organizers to create and manage sponsorship requests while allowing companies to discover and engage with events.
 
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Java](https://img.shields.io/badge/Java-21-orange)
@@ -73,10 +73,10 @@ A comprehensive platform that connects event organizers with companies seeking s
 ## 📁 Project Structure
 
 ```
-sponsorbridge/
-├── sponsorbridge-backend/          # Spring Boot Backend
+Eventra/
+├── Eventra-backend/          # Spring Boot Backend
 │   ├── src/
-│   │   ├── main/java/com/sponsorbridge/
+│   │   ├── main/java/com/Eventra/
 │   │   │   ├── controller/         # REST Controllers
 │   │   │   ├── service/            # Business Logic
 │   │   │   ├── repository/         # Data Access Layer
@@ -87,7 +87,7 @@ sponsorbridge/
 │   │   │   ├── security/           # Security Components
 │   │   │   ├── exception/          # Custom Exceptions
 │   │   │   └── util/               # Utility Classes
-│   │   ├── test/java/com/sponsorbridge/
+│   │   ├── test/java/com/Eventra/
 │   │   │   ├── service/            # Service Tests
 │   │   │   └── controller/         # Controller Tests
 │   │   └── resources/
@@ -96,7 +96,7 @@ sponsorbridge/
 │   ├── pom.xml                     # Maven Dependencies
 │   └── Dockerfile
 │
-├── sponsorbridge-frontend/         # React Frontend
+├── Eventra-frontend/         # React Frontend
 │   ├── src/
 │   │   ├── components/             # React Components
 │   │   ├── pages/                  # Page Components
@@ -134,8 +134,8 @@ sponsorbridge/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/akaronak/sponsorbridge.git
-   cd sponsorbridge
+   git clone https://github.com/akaronak/Eventra.git
+   cd Eventra
    ```
 
 2. **Build and start with Docker Compose:**
@@ -154,7 +154,7 @@ sponsorbridge/
 
 1. **Navigate to backend directory:**
    ```bash
-   cd sponsorbridge-backend
+   cd Eventra-backend
    ```
 
 2. **Install dependencies:**
@@ -163,10 +163,10 @@ sponsorbridge/
    ```
 
 3. **Configure database:**
-   - Create a PostgreSQL database named `sponsorbridge`
+   - Create a PostgreSQL database named `Eventra`
    - Update `src/main/resources/application.properties`:
      ```properties
-     spring.datasource.url=jdbc:postgresql://localhost:5432/sponsorbridge
+     spring.datasource.url=jdbc:postgresql://localhost:5432/Eventra
      spring.datasource.username=postgres
      spring.datasource.password=your_password
      ```
@@ -182,7 +182,7 @@ sponsorbridge/
 
 1. **Navigate to frontend directory:**
    ```bash
-   cd sponsorbridge-frontend
+   cd Eventra-frontend
    ```
 
 2. **Install dependencies:**
@@ -212,7 +212,7 @@ server.port=8080
 server.servlet.context-path=/api
 
 # Database
-spring.datasource.url=jdbc:postgresql://localhost:5432/sponsorbridge
+spring.datasource.url=jdbc:postgresql://localhost:5432/Eventra
 spring.datasource.username=postgres
 spring.datasource.password=password
 spring.jpa.hibernate.ddl-auto=update
@@ -230,7 +230,7 @@ app.file.max-size=10485760
 
 ```
 VITE_API_BASE_URL=http://localhost:8080
-VITE_APP_NAME=SponsorBridge
+VITE_APP_NAME=Eventra
 ```
 
 ## 📚 API Documentation
@@ -275,7 +275,7 @@ For detailed API documentation, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 ### Run Backend Tests
 
 ```bash
-cd sponsorbridge-backend
+cd Eventra-backend
 
 # Run all tests
 mvn test
@@ -290,7 +290,7 @@ mvn test jacoco:report
 ### Run Frontend Tests
 
 ```bash
-cd sponsorbridge-frontend
+cd Eventra-frontend
 
 # Run tests
 npm run test
@@ -305,12 +305,12 @@ npm run test:coverage
 
 ```bash
 # Backend
-cd sponsorbridge-backend
-docker build -t sponsorbridge-backend:latest .
+cd Eventra-backend
+docker build -t Eventra-backend:latest .
 
 # Frontend
-cd sponsorbridge-frontend
-docker build -t sponsorbridge-frontend:latest .
+cd Eventra-frontend
+docker build -t Eventra-frontend:latest .
 ```
 
 ### Run with Docker Compose
@@ -331,7 +331,7 @@ docker-compose logs -f
 ```
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=sponsorbridge
+DB_NAME=Eventra
 DB_USER=postgres
 DB_PASSWORD=password
 JWT_SECRET=your_secret_key
@@ -341,7 +341,7 @@ JWT_EXPIRATION=86400000
 ### Frontend (.env)
 ```
 VITE_API_BASE_URL=http://localhost:8080
-VITE_APP_NAME=SponsorBridge
+VITE_APP_NAME=Eventra
 VITE_APP_VERSION=1.0.0
 ```
 
@@ -349,7 +349,7 @@ VITE_APP_VERSION=1.0.0
 
 - [Setup Guide](./SETUP_GUIDE.md) - Detailed setup instructions
 - [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Production deployment guide
-- [Frontend Setup](./sponsorbridge-frontend/README_SETUP.md) - Frontend-specific setup
+- [Frontend Setup](./Eventra-frontend/README_SETUP.md) - Frontend-specific setup
 - [Frontend Design](./FRONTEND_DESIGN_SUMMARY.md) - UI/UX design documentation
 
 ## 🐛 Known Issues
@@ -392,12 +392,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📞 Support
 
-For support, email support@sponsorbridge.com or create an issue on GitHub.
+For support, email support@Eventra.com or create an issue on GitHub.
 
 ## 🔗 Links
 
-- **GitHub Repository:** https://github.com/akaronak/sponsorbridge
-- **Issue Tracker:** https://github.com/akaronak/sponsorbridge/issues
+- **GitHub Repository:** https://github.com/akaronak/Eventra
+- **Issue Tracker:** https://github.com/akaronak/Eventra/issues
 - **Documentation:** See repository wiki
 
 ## 🎯 Roadmap
@@ -414,4 +414,4 @@ For support, email support@sponsorbridge.com or create an issue on GitHub.
 
 **Last Updated:** February 2026
 
-Made with ❤️ by the SponsorBridge Team
+Made with ❤️ by the Eventra Team

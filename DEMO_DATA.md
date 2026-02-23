@@ -1,4 +1,4 @@
-# SponsorBridge - Demo Data
+# Eventra - Demo Data
 
 ## Sample Companies (Pre-loaded)
 
@@ -198,4 +198,4 @@ curl -X POST http://localhost:3000/api/companies \
 
 ---
 
-Enjoy exploring SponsorBridge! 🌉
+Enjoy exploring Eventra! 🌉

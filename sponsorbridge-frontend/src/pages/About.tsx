@@ -12,11 +12,11 @@ const About: React.FC = () => {
         </Link>
 
         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-12">
-          <h1 className="text-5xl font-bold text-white mb-6">About SponsorBridge</h1>
+          <h1 className="text-5xl font-bold text-white mb-6">About Eventra</h1>
           
           <div className="space-y-6 text-slate-300 text-lg leading-relaxed">
             <p>
-              SponsorBridge was founded in 2023 with a mission to simplify sponsorship matching for college events and passionate brands worldwide.
+              Eventra was founded in 2023 with a mission to simplify sponsorship matching for college events and passionate brands worldwide.
             </p>
             
             <p>
@@ -35,7 +35,7 @@ const About: React.FC = () => {
 
             <div className="mt-12 p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
               <p className="text-indigo-300">
-                Join 120+ college events that are already using SponsorBridge to secure sponsorships and create amazing experiences.
+                Join 120+ college events that are already using Eventra to secure sponsorships and create amazing experiences.
               </p>
             </div>
           </div>

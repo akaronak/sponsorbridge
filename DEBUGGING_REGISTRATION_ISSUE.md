@@ -1,4 +1,4 @@
-# 🔍 SponsorBridge Registration Debugging Guide
+# 🔍 Eventra Registration Debugging Guide
 
 ## Issue Diagnosed: Registration Request Never Reaches Backend
 
@@ -74,7 +74,7 @@ Response sent to browser (same origin - no CORS)
 ### 3. Environment Variables (`.env.development` & `.env.production`)
 ```
 Development:  VITE_API_URL=http://localhost:8080
-Production:   VITE_API_URL=https://api.sponsorbridge.com
+Production:   VITE_API_URL=https://api.Eventra.com
 ```
 
 ### 4. Updated Components to Use API Service
@@ -103,16 +103,16 @@ const response = await api.post('/auth/register', {
 ### 1. Ensure Backend is Running
 ```bash
 # Terminal 1: Start Spring Boot backend
-cd sponsorbridge-backend
+cd Eventra-backend
 mvn spring-boot:run
-# Should see: "Started SponsorBridgeApplication in X seconds"
+# Should see: "Started EventraApplication in X seconds"
 # Listening on: http://localhost:8080
 ```
 
 ### 2. Restart Frontend Dev Server
 ```bash
 # Terminal 2: Restart Vite dev server
-cd sponsorbridge-frontend
+cd Eventra-frontend
 npm run dev
 # Should see: "Local: http://localhost:3000"
 ```

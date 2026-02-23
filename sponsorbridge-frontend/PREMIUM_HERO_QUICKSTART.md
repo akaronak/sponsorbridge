@@ -234,7 +234,7 @@ console.error    // Should be empty
 ## File Locations Reference
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── components/
 │   │   ├── PremiumHero.tsx          ← MAIN HERO (NEW)

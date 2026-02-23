@@ -1,4 +1,4 @@
-# SponsorBridge Frontend
+# Eventra Frontend
 
 A modern, premium SaaS homepage built with React, TypeScript, Vite, and Tailwind CSS.
 
@@ -39,7 +39,7 @@ The app will open at `http://localhost:3000`
 ## 📁 Project Structure
 
 ```
-sponsorbridge-frontend/
+Eventra-frontend/
 ├── src/
 │   ├── pages/
 │   │   └── Home.tsx          # Homepage component
@@ -239,6 +239,6 @@ For issues or questions, please open an issue on GitHub.
 
 ---
 
-**Built with ❤️ for SponsorBridge**
+**Built with ❤️ for Eventra**
 
 Last Updated: February 16, 2026

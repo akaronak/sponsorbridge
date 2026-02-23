@@ -79,7 +79,7 @@ import WorkflowTimeline from '../components/WorkflowTimeline';
 **How to See It:**
 1. Scroll down past "Premium Hero"
 2. Scroll past "Features Showcase"
-3. You'll see **"How SponsorBridge Powers Every Deal"** section
+3. You'll see **"How Eventra Powers Every Deal"** section
 4. Watch the connector line animate as you scroll
 5. Hover cards to see lift, scale, and glow
 
@@ -186,7 +186,7 @@ scrub: 0.3,  // Was: 0.5-0.6 (lower = faster motion)
 ### Development
 
 ```bash
-cd sponsorbridge-frontend
+cd Eventra-frontend
 npm run dev              # Dev server on port 3001
 ```
 
@@ -209,7 +209,7 @@ npm run preview          # View production build locally
 ✅ **Check These Quickly:**
 
 1. **Scroll Test:** Open http://localhost:3001, scroll down
-2. **Timeline visible:** See "How SponsorBridge Powers Every Deal"
+2. **Timeline visible:** See "How Eventra Powers Every Deal"
 3. **Cards appear:** Watch them fade in sequentially
 4. **Connector animates:** See line draw left to right (desktop)
 5. **Card active:** First card should be more visible (opacity-100)

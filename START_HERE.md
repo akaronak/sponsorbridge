@@ -1,8 +1,8 @@
-# 🎉 SponsorBridge Website - START HERE
+# 🎉 Eventra Website - START HERE
 
 ## ✅ Your Website is LIVE!
 
-Your complete SponsorBridge website is now running and ready to use.
+Your complete Eventra website is now running and ready to use.
 
 ---
 
@@ -162,7 +162,7 @@ npm start
 
 ## 🎉 You're All Set!
 
-Your SponsorBridge website is ready to use!
+Your Eventra website is ready to use!
 
 **Visit:** http://localhost:3000
 

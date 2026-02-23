@@ -1,8 +1,8 @@
-# 🌉 SponsorBridge - Live Website
+# 🌉 Eventra - Live Website
 
 ## 🎯 Mission Accomplished!
 
-Your SponsorBridge website is **fully deployed and running** with a complete backend API and beautiful frontend interface.
+Your Eventra website is **fully deployed and running** with a complete backend API and beautiful frontend interface.
 
 ---
 
@@ -128,7 +128,7 @@ That's it! Your website is ready to use.
 ## 📁 File Structure
 
 ```
-SponsorBridge/
+Eventra/
 ├── server.js                    # Express backend server
 ├── package.json                 # Node.js dependencies
 ├── public/
@@ -421,7 +421,7 @@ Replace in-memory storage with PostgreSQL:
 
 ## 🎉 You're Ready!
 
-Your SponsorBridge website is fully functional and ready to use!
+Your Eventra website is fully functional and ready to use!
 
 ### Next Steps
 1. **Open:** http://localhost:3000
@@ -440,7 +440,7 @@ This project is open source and available for educational and commercial use.
 
 ## 🙏 Thank You
 
-Thank you for using SponsorBridge! We hope this platform helps connect sponsors with amazing events.
+Thank you for using Eventra! We hope this platform helps connect sponsors with amazing events.
 
 **Happy sponsoring! 🌉**
 

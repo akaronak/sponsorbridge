@@ -1,6 +1,6 @@
-# SponsorBridge Frontend
+# Eventra Frontend
 
-React + TypeScript + Vite + Tailwind CSS frontend for the SponsorBridge platform.
+React + TypeScript + Vite + Tailwind CSS frontend for the Eventra platform.
 
 ## Prerequisites
 

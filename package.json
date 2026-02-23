@@ -1,7 +1,7 @@
 {
-  "name": "sponsorbridge",
+  "name": "Eventra",
   "version": "1.0.0",
-  "description": "SponsorBridge - Connect sponsors with events",
+  "description": "Eventra - Connect sponsors with events",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
