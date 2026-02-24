@@ -24,13 +24,13 @@ public class JwtTokenProvider {
      * @param role the user role
      * @return JWT token string
      */
-    public String generateToken(Long userId, String role) {
+    public String generateToken(String userId, String role) {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .subject(userId.toString())
+                .subject(userId)
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -61,14 +61,14 @@ public class JwtTokenProvider {
      * @param token the JWT token
      * @return user ID
      */
-    public Long getUserIdFromToken(String token) {
+    public String getUserIdFromToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
         Claims claims = Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return Long.parseLong(claims.getSubject());
+        return claims.getSubject();
     }
 
     /**

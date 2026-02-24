@@ -28,7 +28,7 @@ public class NotificationController {
             Authentication auth,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         return ResponseEntity.ok(notificationService.getNotifications(userId, page, size));
     }
 
@@ -37,7 +37,7 @@ public class NotificationController {
      */
     @GetMapping("/unread")
     public ResponseEntity<List<NotificationDTO>> getUnreadNotifications(Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         return ResponseEntity.ok(notificationService.getUnreadNotifications(userId));
     }
 
@@ -46,7 +46,7 @@ public class NotificationController {
      */
     @GetMapping("/count")
     public ResponseEntity<Map<String, Integer>> getUnreadCount(Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         return ResponseEntity.ok(Map.of("count", notificationService.getUnreadCount(userId)));
     }
 
@@ -56,8 +56,8 @@ public class NotificationController {
     @PostMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(
             Authentication auth,
-            @PathVariable Long id) {
-        Long userId = Long.parseLong(auth.getName());
+            @PathVariable String id) {
+        String userId = auth.getName();
         notificationService.markAsRead(id, userId);
         return ResponseEntity.noContent().build();
     }
@@ -67,7 +67,7 @@ public class NotificationController {
      */
     @PostMapping("/read-all")
     public ResponseEntity<Map<String, Integer>> markAllAsRead(Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         int count = notificationService.markAllAsRead(userId);
         return ResponseEntity.ok(Map.of("marked", count));
     }

@@ -15,9 +15,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ConversationMessageDTO {
-    private Long id;
-    private Long conversationId;
-    private Long senderId;
+    private String id;
+    private String conversationId;
+    private String senderId;
     private String senderName;
     private String senderRole;
     private MessageType messageType;
@@ -30,7 +30,7 @@ public class ConversationMessageDTO {
     private String proposalTerms;
     private String goodiesDescription;
     private LocalDateTime proposalDeadline;
-    private Long parentMessageId;
+    private String parentMessageId;
 
     // Attachment
     private String attachmentUrl;

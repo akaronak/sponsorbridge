@@ -3,13 +3,16 @@ package com.eventra.service;
 import com.eventra.dto.CompanyDTO;
 import com.eventra.dto.CompanyRequest;
 import com.eventra.entity.Company;
-import com.eventra.entity.User;
 import com.eventra.mapper.CompanyMapper;
 import com.eventra.repository.CompanyRepository;
 import com.eventra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,51 +27,74 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final CompanyMapper companyMapper;
+    private final MongoTemplate mongoTemplate;
 
-    public CompanyDTO createCompany(Long userId, CompanyRequest request) {
-        User user = userRepository.findById(userId)
+    public CompanyDTO createCompany(String userId, CompanyRequest request) {
+        userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         if (companyRepository.findByUserId(userId).isPresent()) {
             throw new RuntimeException("User already has a company profile");
         }
-        
+
         Company company = companyMapper.toEntity(request);
-        company.setUser(user);
+        company.setUserId(userId);
         company.setVerified(false);
-        
+
         Company saved = companyRepository.save(company);
         return companyMapper.toDTO(saved);
     }
 
-    public CompanyDTO getCompanyById(Long companyId) {
+    public CompanyDTO getCompanyById(String companyId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
         return companyMapper.toDTO(company);
     }
 
-    public CompanyDTO updateCompany(Long companyId, Long userId, CompanyRequest request) {
+    public CompanyDTO updateCompany(String companyId, String userId, CompanyRequest request) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
-        
-        if (!company.getUser().getId().equals(userId)) {
+
+        if (!company.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized: You can only update your own company profile");
         }
-        
+
         companyMapper.updateEntityFromRequest(request, company);
         Company updated = companyRepository.save(company);
         return companyMapper.toDTO(updated);
     }
 
     public Page<CompanyDTO> searchCompanies(String location, String industry, String eventType, Pageable pageable) {
-        Page<Company> companies = companyRepository.searchCompanies(location, industry, eventType, pageable);
-        return companies.map(companyMapper::toDTO);
+        Criteria criteria = Criteria.where("verified").is(true);
+
+        if (location != null) criteria.and("location").is(location);
+        if (industry != null) criteria.and("industry").is(industry);
+        if (eventType != null) criteria.and("preferredEventTypes").in(eventType);
+
+        Query query = new Query(criteria).with(pageable);
+        List<Company> companies = mongoTemplate.find(query, Company.class);
+        long count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Company.class);
+
+        return PageableExecutionUtils.getPage(companies, pageable, () -> count)
+                .map(companyMapper::toDTO);
     }
 
-    public Page<CompanyDTO> searchCompaniesByFilters(String location, String industry, String sponsorshipType, 
+    public Page<CompanyDTO> searchCompaniesByFilters(String location, String industry, String sponsorshipType,
                                                       BigDecimal budgetMin, BigDecimal budgetMax, Pageable pageable) {
-        Page<Company> companies = companyRepository.searchCompaniesByFilters(location, industry, sponsorshipType, budgetMin, budgetMax, pageable);
-        return companies.map(companyMapper::toDTO);
+        Criteria criteria = Criteria.where("verified").is(true);
+
+        if (location != null) criteria.and("location").is(location);
+        if (industry != null) criteria.and("industry").is(industry);
+        if (sponsorshipType != null) criteria.and("sponsorshipTypes").in(sponsorshipType);
+        if (budgetMin != null) criteria.and("budgetMax").gte(budgetMin);
+        if (budgetMax != null) criteria.and("budgetMin").lte(budgetMax);
+
+        Query query = new Query(criteria).with(pageable);
+        List<Company> companies = mongoTemplate.find(query, Company.class);
+        long count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Company.class);
+
+        return PageableExecutionUtils.getPage(companies, pageable, () -> count)
+                .map(companyMapper::toDTO);
     }
 
     public Page<CompanyDTO> getAllVerifiedCompanies(Pageable pageable) {
@@ -77,25 +103,22 @@ public class CompanyService {
     }
 
     public List<CompanyDTO> getPendingCompanies() {
-        List<Company> companies = companyRepository.findByVerifiedFalse();
-        return companies.stream()
+        return companyRepository.findByVerifiedFalse().stream()
                 .map(companyMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public CompanyDTO approveCompany(Long companyId) {
+    public CompanyDTO approveCompany(String companyId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
         company.setVerified(true);
-        Company updated = companyRepository.save(company);
-        return companyMapper.toDTO(updated);
+        return companyMapper.toDTO(companyRepository.save(company));
     }
 
-    public CompanyDTO rejectCompany(Long companyId) {
+    public CompanyDTO rejectCompany(String companyId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
         company.setVerified(false);
-        Company updated = companyRepository.save(company);
-        return companyMapper.toDTO(updated);
+        return companyMapper.toDTO(companyRepository.save(company));
     }
 }

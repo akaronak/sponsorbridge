@@ -22,14 +22,14 @@ public class MessageController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageDTO> sendMessage(@Valid @RequestBody MessageRequest request, Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
+        String userId = authentication.getName();
         MessageDTO message = messageService.sendMessage(userId, request.getRequestId(), request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
     @GetMapping("/request/{requestId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<MessageDTO>> getMessagesByRequest(@PathVariable Long requestId) {
+    public ResponseEntity<List<MessageDTO>> getMessagesByRequest(@PathVariable String requestId) {
         List<MessageDTO> messages = messageService.getMessagesByRequest(requestId);
         return ResponseEntity.ok(messages);
     }

@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class OrganizerDTO {
-    private Long id;
+    private String id;
     private String organizerName;
     private String institution;
     private String eventName;

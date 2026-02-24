@@ -28,7 +28,7 @@ public class ConversationController {
      */
     @GetMapping
     public ResponseEntity<List<ConversationDTO>> getConversations(Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         return ResponseEntity.ok(conversationService.getConversations(userId));
     }
 
@@ -39,7 +39,7 @@ public class ConversationController {
     public ResponseEntity<ConversationDTO> createConversation(
             Authentication auth,
             @Valid @RequestBody CreateConversationRequest request) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         ConversationDTO dto = conversationService.getOrCreateConversation(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -50,8 +50,8 @@ public class ConversationController {
     @GetMapping("/{id}")
     public ResponseEntity<ConversationDTO> getConversation(
             Authentication auth,
-            @PathVariable Long id) {
-        Long userId = Long.parseLong(auth.getName());
+            @PathVariable String id) {
+        String userId = auth.getName();
         return ResponseEntity.ok(conversationService.getConversation(id, userId));
     }
 
@@ -61,8 +61,8 @@ public class ConversationController {
     @GetMapping("/{id}/messages")
     public ResponseEntity<List<ConversationMessageDTO>> getMessages(
             Authentication auth,
-            @PathVariable Long id) {
-        Long userId = Long.parseLong(auth.getName());
+            @PathVariable String id) {
+        String userId = auth.getName();
         return ResponseEntity.ok(conversationService.getMessages(id, userId));
     }
 
@@ -72,9 +72,9 @@ public class ConversationController {
     @PostMapping("/{id}/messages")
     public ResponseEntity<ConversationMessageDTO> sendMessage(
             Authentication auth,
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody SendMessageRequest request) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         request.setConversationId(id);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(conversationService.sendMessage(userId, request));
@@ -86,8 +86,8 @@ public class ConversationController {
     @PostMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(
             Authentication auth,
-            @PathVariable Long id) {
-        Long userId = Long.parseLong(auth.getName());
+            @PathVariable String id) {
+        String userId = auth.getName();
         conversationService.markConversationAsRead(id, userId);
         return ResponseEntity.noContent().build();
     }
@@ -97,7 +97,7 @@ public class ConversationController {
      */
     @GetMapping("/unread")
     public ResponseEntity<Map<String, Integer>> getUnreadCount(Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
         int count = conversationService.getTotalUnreadCount(userId);
         return ResponseEntity.ok(Map.of("count", count));
     }

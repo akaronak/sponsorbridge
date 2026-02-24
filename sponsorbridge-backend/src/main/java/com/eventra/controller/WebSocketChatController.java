@@ -6,7 +6,6 @@ import com.eventra.dto.TypingIndicatorDTO;
 import com.eventra.service.ConversationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -15,19 +14,18 @@ import org.springframework.stereotype.Controller;
 import java.security.Principal;
 
 /**
- * WebSocket STOMP controller for real-time messaging.
- *
- * Client subscription topics:
- * - /topic/conversation/{id}         → New messages in conversation
- * - /topic/conversation/{id}/typing  → Typing indicators
- * - /topic/conversation/{id}/read    → Read receipts
- * - /user/queue/messages             → Personal message delivery
- * - /user/queue/notifications        → Personal notifications
- *
- * Client send destinations:
- * - /app/chat.send/{conversationId}  → Send a message
- * - /app/chat.typing/{conversationId} → Typing indicator
- * - /app/chat.read/{conversationId}  → Mark as read
+ * WebSocket (STOMP) controller for real-time chat operations.
+ * 
+ * Client destinations:
+ * - /app/chat.send       → Send a message in a conversation
+ * - /app/chat.typing     → Broadcast typing indicator
+ * 
+ * Server broadcasts to:
+ * - /topic/conversation/{id}          → New messages
+ * - /topic/conversation/{id}/typing   → Typing indicators
+ * - /topic/conversation/{id}/read     → Read receipts
+ * - /user/{userId}/queue/messages     → Direct message delivery
+ * - /user/{userId}/queue/notifications → Notification delivery
  */
 @Controller
 @RequiredArgsConstructor
@@ -37,57 +35,40 @@ public class WebSocketChatController {
     private final ConversationService conversationService;
 
     /**
-     * Handle sending a message via WebSocket.
-     * Client sends to: /app/chat.send/{conversationId}
+     * Handle incoming chat messages via WebSocket.
+     * Client sends to: /app/chat.send
      */
-    @MessageMapping("/chat.send/{conversationId}")
-    public void sendMessage(
-            @DestinationVariable Long conversationId,
-            @Payload SendMessageRequest request,
-            Principal principal) {
-
+    @MessageMapping("/chat.send")
+    public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
         if (principal == null) {
-            log.warn("Unauthenticated WebSocket message rejected");
+            log.warn("Received WebSocket message without authentication");
             return;
         }
 
-        Long userId = Long.parseLong(principal.getName());
-        request.setConversationId(conversationId);
+        String userId = principal.getName();
+        log.debug("WebSocket message from user {} in conversation {}", userId, request.getConversationId());
 
         ConversationMessageDTO dto = conversationService.sendMessage(userId, request);
-        log.debug("WebSocket message {} sent in conversation {} by user {}",
-                dto.getId(), conversationId, userId);
+        log.info("WebSocket message {} delivered in conversation {}", dto.getId(), request.getConversationId());
     }
 
     /**
-     * Handle typing indicator via WebSocket.
-     * Client sends to: /app/chat.typing/{conversationId}
+     * Handle typing indicator events via WebSocket.
+     * Client sends to: /app/chat.typing
      */
-    @MessageMapping("/chat.typing/{conversationId}")
-    public void handleTyping(
-            @DestinationVariable Long conversationId,
-            @Payload TypingIndicatorDTO typing,
-            Principal principal) {
+    @MessageMapping("/chat.typing")
+    public void handleTyping(@Payload TypingIndicatorDTO typingIndicator, Principal principal) {
+        if (principal == null) {
+            log.warn("Received typing indicator without authentication");
+            return;
+        }
 
-        if (principal == null) return;
+        String userId = principal.getName();
+        typingIndicator.setUserId(userId);
 
-        typing.setConversationId(conversationId);
-        typing.setUserId(Long.parseLong(principal.getName()));
-        conversationService.broadcastTypingIndicator(typing);
-    }
+        log.debug("Typing indicator from user {} in conversation {}: {}",
+                userId, typingIndicator.getConversationId(), typingIndicator.isTyping());
 
-    /**
-     * Handle mark-as-read via WebSocket.
-     * Client sends to: /app/chat.read/{conversationId}
-     */
-    @MessageMapping("/chat.read/{conversationId}")
-    public void markAsRead(
-            @DestinationVariable Long conversationId,
-            Principal principal) {
-
-        if (principal == null) return;
-
-        Long userId = Long.parseLong(principal.getName());
-        conversationService.markConversationAsRead(conversationId, userId);
+        conversationService.broadcastTypingIndicator(typingIndicator);
     }
 }

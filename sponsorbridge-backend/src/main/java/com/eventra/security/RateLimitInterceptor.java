@@ -64,9 +64,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             Object principal = authentication.getPrincipal();
-            if (principal instanceof Long) {
-                return "user_" + principal;
-            } else if (principal instanceof String) {
+            if (principal instanceof String) {
                 return "user_" + principal;
             }
         }

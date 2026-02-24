@@ -15,9 +15,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class RequestRequest {
-    @NotNull(message = "Company ID cannot be null")
-    @Positive(message = "Company ID must be positive")
-    private Long companyId;
+    @NotBlank(message = "Company ID cannot be blank")
+    private String companyId;
 
     @NotBlank(message = "Event summary cannot be blank")
     private String eventSummary;

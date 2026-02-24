@@ -1,20 +1,23 @@
 package com.eventra.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "conversations", indexes = {
-    @Index(name = "idx_conv_company", columnList = "company_id"),
-    @Index(name = "idx_conv_organizer", columnList = "organizer_id"),
-    @Index(name = "idx_conv_event", columnList = "event_name"),
-    @Index(name = "idx_conv_updated", columnList = "updated_at DESC"),
-    @Index(name = "idx_conv_status", columnList = "status")
+@Document(collection = "conversations")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_conv_existing", def = "{'companyId': 1, 'organizerId': 1, 'eventName': 1}"),
+    @CompoundIndex(name = "idx_conv_user_updated", def = "{'companyId': 1, 'organizerId': 1, 'lastMessageAt': -1}")
 })
 @Data
 @NoArgsConstructor
@@ -23,123 +26,65 @@ import java.util.List;
 public class Conversation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    /**
-     * The company (sponsor) participating in this conversation.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
+    @Indexed
     @NotNull
-    private User company;
+    private String companyId;
 
-    /**
-     * The organizer participating in this conversation.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organizer_id", nullable = false)
+    @Indexed
     @NotNull
-    private User organizer;
+    private String organizerId;
 
-    /**
-     * The event this conversation is about (denormalized for quick display).
-     */
-    @Column(name = "event_name", nullable = false)
+    @Indexed
     private String eventName;
 
-    /**
-     * Optional link to the sponsorship request that triggered this conversation.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id")
-    private SponsorshipRequest request;
+    private String requestId;
 
-    /**
-     * Subject/title for the conversation thread.
-     */
-    @Column(length = 500)
     private String subject;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Indexed
     @Builder.Default
     private ConversationStatus status = ConversationStatus.ACTIVE;
 
-    /**
-     * Cached last message content for conversation list display.
-     */
-    @Column(name = "last_message_preview", length = 255)
     private String lastMessagePreview;
 
-    @Column(name = "last_message_at")
     private LocalDateTime lastMessageAt;
 
-    /**
-     * Unread counts for each side.
-     */
-    @Column(name = "unread_company", nullable = false)
     @Builder.Default
     private Integer unreadCompany = 0;
 
-    @Column(name = "unread_organizer", nullable = false)
     @Builder.Default
     private Integer unreadOrganizer = 0;
 
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("createdAt ASC")
-    @Builder.Default
-    private List<ConversationMessage> messages = new ArrayList<>();
-
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        lastMessageAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * Get the unread count for a specific user.
-     */
-    public int getUnreadCountForUser(Long userId) {
-        if (company != null && company.getId().equals(userId)) {
+    public int getUnreadCountForUser(String userId) {
+        if (userId != null && userId.equals(companyId)) {
             return unreadCompany != null ? unreadCompany : 0;
         }
-        if (organizer != null && organizer.getId().equals(userId)) {
+        if (userId != null && userId.equals(organizerId)) {
             return unreadOrganizer != null ? unreadOrganizer : 0;
         }
         return 0;
     }
 
-    /**
-     * Increment unread for the other party when a message is sent.
-     */
-    public void incrementUnreadForRecipient(Long senderId) {
-        if (company != null && company.getId().equals(senderId)) {
+    public void incrementUnreadForRecipient(String senderId) {
+        if (senderId != null && senderId.equals(companyId)) {
             unreadOrganizer = (unreadOrganizer != null ? unreadOrganizer : 0) + 1;
         } else {
             unreadCompany = (unreadCompany != null ? unreadCompany : 0) + 1;
         }
     }
 
-    /**
-     * Reset unread count when user reads messages.
-     */
-    public void markReadForUser(Long userId) {
-        if (company != null && company.getId().equals(userId)) {
+    public void markReadForUser(String userId) {
+        if (userId != null && userId.equals(companyId)) {
             unreadCompany = 0;
-        } else if (organizer != null && organizer.getId().equals(userId)) {
+        } else if (userId != null && userId.equals(organizerId)) {
             unreadOrganizer = 0;
         }
     }

@@ -2,23 +2,27 @@ package com.eventra.mapper;
 
 import com.eventra.dto.RequestDTO;
 import com.eventra.dto.RequestRequest;
+import com.eventra.entity.Company;
+import com.eventra.entity.Organizer;
 import com.eventra.entity.SponsorshipRequest;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RequestMapper {
-    
-    public RequestDTO toDTO(SponsorshipRequest request) {
-        if (request == null) {
-            return null;
-        }
-        
+
+    /**
+     * Convert SponsorshipRequest document to DTO.
+     * Requires pre-fetched Organizer and Company for name resolution.
+     */
+    public RequestDTO toDTO(SponsorshipRequest request, Organizer organizer, Company company) {
+        if (request == null) return null;
+
         return RequestDTO.builder()
                 .id(request.getId())
-                .organizerId(request.getOrganizer().getId())
-                .organizerName(request.getOrganizer().getOrganizerName())
-                .companyId(request.getCompany().getId())
-                .companyName(request.getCompany().getCompanyName())
+                .organizerId(request.getOrganizerId())
+                .organizerName(organizer != null ? organizer.getOrganizerName() : null)
+                .companyId(request.getCompanyId())
+                .companyName(company != null ? company.getCompanyName() : null)
                 .eventSummary(request.getEventSummary())
                 .expectedAudienceSize(request.getExpectedAudienceSize())
                 .offering(request.getOffering())
@@ -28,12 +32,10 @@ public class RequestMapper {
                 .proposalUrl(request.getProposalUrl())
                 .build();
     }
-    
+
     public SponsorshipRequest toEntity(RequestRequest request) {
-        if (request == null) {
-            return null;
-        }
-        
+        if (request == null) return null;
+
         return SponsorshipRequest.builder()
                 .eventSummary(request.getEventSummary())
                 .expectedAudienceSize(request.getExpectedAudienceSize())
@@ -43,12 +45,10 @@ public class RequestMapper {
                 .preferredCommunicationMode(request.getPreferredCommunicationMode())
                 .build();
     }
-    
+
     public void updateEntityFromRequest(RequestRequest request, SponsorshipRequest sponsorshipRequest) {
-        if (request == null || sponsorshipRequest == null) {
-            return;
-        }
-        
+        if (request == null || sponsorshipRequest == null) return;
+
         sponsorshipRequest.setEventSummary(request.getEventSummary());
         sponsorshipRequest.setExpectedAudienceSize(request.getExpectedAudienceSize());
         sponsorshipRequest.setOffering(request.getOffering());

@@ -61,12 +61,12 @@ public class WebSocketAuthConfig implements WebSocketMessageBrokerConfigurer {
                     }
 
                     if (token != null && jwtTokenProvider.validateToken(token)) {
-                        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+                        String userId = jwtTokenProvider.getUserIdFromToken(token);
                         String role = jwtTokenProvider.getRoleFromToken(token);
 
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(
-                                        userId.toString(),
+                                        userId,
                                         null,
                                         List.of(new SimpleGrantedAuthority("ROLE_" + role))
                                 );

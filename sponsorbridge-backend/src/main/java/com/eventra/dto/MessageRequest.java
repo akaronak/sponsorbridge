@@ -18,9 +18,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class MessageRequest {
-    @NotNull(message = "Request ID cannot be null")
-    @Positive(message = "Request ID must be positive")
-    private Long requestId;
+    @NotBlank(message = "Request ID cannot be blank")
+    private String requestId;
 
     @NotBlank(message = "Content cannot be blank")
     @Size(max = 5000, message = "Content cannot exceed 5000 characters")

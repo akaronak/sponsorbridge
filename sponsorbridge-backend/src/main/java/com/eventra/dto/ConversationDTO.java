@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ConversationDTO {
-    private Long id;
-    private Long companyId;
+    private String id;
+    private String companyId;
     private String companyName;
-    private Long organizerId;
+    private String organizerId;
     private String organizerName;
     private String eventName;
     private String subject;
@@ -24,7 +24,7 @@ public class ConversationDTO {
     private String lastMessagePreview;
     private LocalDateTime lastMessageAt;
     private int unreadCount;
-    private Long participantId;
+    private String participantId;
     private String participantName;
     private String participantRole;
     private LocalDateTime createdAt;

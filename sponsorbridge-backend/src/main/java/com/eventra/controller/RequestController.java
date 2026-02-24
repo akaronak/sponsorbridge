@@ -14,60 +14,98 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * REST controller for sponsorship request management.
+ */
 @RestController
 @RequestMapping("/api/requests")
 @RequiredArgsConstructor
 public class RequestController {
+
     private final RequestService requestService;
 
+    /**
+     * POST /api/requests — Create a new sponsorship request.
+     * Only organizers can create requests.
+     */
     @PostMapping
     @PreAuthorize("hasRole('ORGANIZER')")
-    public ResponseEntity<RequestDTO> createRequest(@Valid @RequestBody RequestRequest request, Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        RequestDTO createdRequest = requestService.createRequest(userId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRequest);
+    public ResponseEntity<RequestDTO> createRequest(
+            @Valid @RequestBody RequestRequest request,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        RequestDTO dto = requestService.createRequest(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
+    /**
+     * GET /api/requests/{id} — Get a specific sponsorship request by ID.
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<RequestDTO> getRequestById(@PathVariable Long id) {
-        RequestDTO request = requestService.getRequestById(id);
-        return ResponseEntity.ok(request);
+    public ResponseEntity<RequestDTO> getRequestById(@PathVariable String id) {
+        RequestDTO dto = requestService.getRequestById(id);
+        return ResponseEntity.ok(dto);
     }
 
+    /**
+     * GET /api/requests/organizer/{organizerId} — Get requests by organizer.
+     * Supports optional status filter and pagination.
+     */
     @GetMapping("/organizer/{organizerId}")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Page<RequestDTO>> getRequestsByOrganizer(
-            @PathVariable Long organizerId,
+            @PathVariable String organizerId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<RequestDTO> requests = requestService.getRequestsByOrganizer(organizerId, status, pageable);
         return ResponseEntity.ok(requests);
     }
 
+    /**
+     * GET /api/requests/company/{companyId} — Get requests by company.
+     * Supports optional status filter and pagination.
+     */
     @GetMapping("/company/{companyId}")
+    @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<Page<RequestDTO>> getRequestsByCompany(
-            @PathVariable Long companyId,
+            @PathVariable String companyId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<RequestDTO> requests = requestService.getRequestsByCompany(companyId, status, pageable);
         return ResponseEntity.ok(requests);
     }
 
+    /**
+     * PUT /api/requests/{id}/status — Update sponsorship request status.
+     * Only the target company can update the status.
+     */
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<RequestDTO> updateRequestStatus(
-            @PathVariable Long id,
-            @RequestBody Map<String, String> statusUpdate,
+            @PathVariable String id,
+            @RequestBody Map<String, String> body,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        String newStatus = statusUpdate.get("status");
-        RequestDTO updatedRequest = requestService.updateRequestStatus(id, userId, newStatus);
-        return ResponseEntity.ok(updatedRequest);
+        String userId = authentication.getName();
+        String newStatus = body.get("status");
+        RequestDTO dto = requestService.updateRequestStatus(id, userId, newStatus);
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * GET /api/requests/check-duplicate — Check for duplicate requests.
+     */
+    @GetMapping("/check-duplicate")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public ResponseEntity<Map<String, Boolean>> checkDuplicate(
+            @RequestParam String organizerId,
+            @RequestParam String companyId) {
+        boolean isDuplicate = requestService.isDuplicateRequest(organizerId, companyId);
+        return ResponseEntity.ok(Map.of("duplicate", isDuplicate));
     }
 }

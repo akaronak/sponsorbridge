@@ -1,21 +1,20 @@
 package com.eventra.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-/**
- * Notification entity — tracks real-time alerts for users.
- * Each notification is tied to a user and optionally a conversation.
- */
-@Entity
-@Table(name = "notifications", indexes = {
-    @Index(name = "idx_notif_user", columnList = "user_id"),
-    @Index(name = "idx_notif_read", columnList = "is_read"),
-    @Index(name = "idx_notif_created", columnList = "created_at DESC"),
-    @Index(name = "idx_notif_type", columnList = "notification_type")
+@Document(collection = "notifications")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_notif_user_read", def = "{'userId': 1, 'isRead': 1}"),
+    @CompoundIndex(name = "idx_notif_user_created", def = "{'userId': 1, 'createdAt': -1}")
 })
 @Data
 @NoArgsConstructor
@@ -24,54 +23,31 @@ import java.time.LocalDateTime;
 public class Notification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @Indexed
     @NotNull
-    private User user;
+    private String userId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "notification_type", nullable = false)
+    @Indexed
     private NotificationType notificationType;
 
-    @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    /**
-     * Optional conversation link for message-related notifications.
-     */
-    @Column(name = "conversation_id")
-    private Long conversationId;
+    private String conversationId;
 
-    /**
-     * Optional action URL for clickable notifications.
-     */
-    @Column(name = "action_url", length = 500)
     private String actionUrl;
 
-    /**
-     * ID of the user who triggered this notification (e.g., message sender).
-     */
-    @Column(name = "actor_id")
-    private Long actorId;
+    private String actorId;
 
-    @Column(name = "actor_name", length = 255)
     private String actorName;
 
-    @Column(name = "is_read", nullable = false)
+    @Indexed
     @Builder.Default
     private Boolean isRead = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }

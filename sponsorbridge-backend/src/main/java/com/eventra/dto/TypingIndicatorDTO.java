@@ -10,8 +10,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class TypingIndicatorDTO {
-    private Long conversationId;
-    private Long userId;
+    private String conversationId;
+    private String userId;
     private String userName;
     private boolean typing;
 }

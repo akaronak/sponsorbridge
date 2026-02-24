@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class RequestDTO {
-    private Long id;
-    private Long organizerId;
+    private String id;
+    private String organizerId;
     private String organizerName;
-    private Long companyId;
+    private String companyId;
     private String companyName;
     private String eventSummary;
     private Integer expectedAudienceSize;

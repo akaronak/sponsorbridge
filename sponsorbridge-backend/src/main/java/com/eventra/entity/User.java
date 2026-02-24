@@ -1,69 +1,45 @@
 package com.eventra.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = "email", name = "uk_users_email")
-})
+@Document(collection = "users")
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(unique = true, nullable = false)
-    @Email(message = "Email should be valid")
+    @Id
+    private String id;
+
+    @Indexed(unique = true)
     @NotBlank(message = "Email cannot be blank")
+    @Email(message = "Email should be valid")
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
-    @NotBlank(message = "Password hash cannot be blank")
+    @NotBlank(message = "Password is required")
     private String passwordHash;
 
-    @Column(nullable = false)
-    @NotBlank(message = "Name cannot be blank")
+    @NotBlank(message = "Name is required")
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @NotNull(message = "Role is required")
+    @Indexed
     private Role role;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Company company;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Organizer organizer;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

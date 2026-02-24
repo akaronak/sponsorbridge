@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class CompanyDTO {
-    private Long id;
+    private String id;
     private String companyName;
     private String industry;
     private String location;

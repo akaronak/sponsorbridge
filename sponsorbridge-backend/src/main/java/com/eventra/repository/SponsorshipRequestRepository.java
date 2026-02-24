@@ -4,41 +4,28 @@ import com.eventra.entity.RequestStatus;
 import com.eventra.entity.SponsorshipRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface SponsorshipRequestRepository extends JpaRepository<SponsorshipRequest, Long> {
-    Page<SponsorshipRequest> findByOrganizerIdOrderByCreatedAtDesc(Long organizerId, Pageable pageable);
-    
+public interface SponsorshipRequestRepository extends MongoRepository<SponsorshipRequest, String> {
+
+    Page<SponsorshipRequest> findByOrganizerIdOrderByCreatedAtDesc(String organizerId, Pageable pageable);
+
     Page<SponsorshipRequest> findByOrganizerIdAndStatusOrderByCreatedAtDesc(
-        Long organizerId, 
-        RequestStatus status, 
-        Pageable pageable
-    );
-    
-    Page<SponsorshipRequest> findByCompanyIdOrderByCreatedAtDesc(Long companyId, Pageable pageable);
-    
+        String organizerId, RequestStatus status, Pageable pageable);
+
+    Page<SponsorshipRequest> findByCompanyIdOrderByCreatedAtDesc(String companyId, Pageable pageable);
+
     Page<SponsorshipRequest> findByCompanyIdAndStatusOrderByCreatedAtDesc(
-        Long companyId, 
-        RequestStatus status, 
-        Pageable pageable
-    );
-    
-    @Query("SELECT COUNT(r) > 0 FROM SponsorshipRequest r " +
-           "WHERE r.organizer.id = :organizerId " +
-           "AND r.company.id = :companyId " +
-           "AND r.createdAt >= :thirtyDaysAgo")
-    boolean existsDuplicateRequest(
-        @Param("organizerId") Long organizerId,
-        @Param("companyId") Long companyId,
-        @Param("thirtyDaysAgo") LocalDateTime thirtyDaysAgo
-    );
-    
-    Optional<SponsorshipRequest> findByIdAndCompanyId(Long requestId, Long companyId);
+        String companyId, RequestStatus status, Pageable pageable);
+
+    @Query(value = "{'organizerId': ?0, 'companyId': ?1, 'createdAt': {'$gte': ?2}}", count = true)
+    long countDuplicateRequests(String organizerId, String companyId, LocalDateTime thirtyDaysAgo);
+
+    Optional<SponsorshipRequest> findByIdAndCompanyId(String requestId, String companyId);
 }

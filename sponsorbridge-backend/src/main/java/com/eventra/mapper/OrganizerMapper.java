@@ -7,12 +7,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class OrganizerMapper {
-    
+
     public OrganizerDTO toDTO(Organizer organizer) {
-        if (organizer == null) {
-            return null;
-        }
-        
+        if (organizer == null) return null;
+
         return OrganizerDTO.builder()
                 .id(organizer.getId())
                 .organizerName(organizer.getOrganizerName())
@@ -26,12 +24,10 @@ public class OrganizerMapper {
                 .verified(organizer.getVerified())
                 .build();
     }
-    
+
     public Organizer toEntity(OrganizerRequest request) {
-        if (request == null) {
-            return null;
-        }
-        
+        if (request == null) return null;
+
         return Organizer.builder()
                 .organizerName(request.getOrganizerName())
                 .institution(request.getInstitution())
@@ -42,12 +38,10 @@ public class OrganizerMapper {
                 .socialMediaLinks(request.getSocialMediaLinks())
                 .build();
     }
-    
+
     public void updateEntityFromRequest(OrganizerRequest request, Organizer organizer) {
-        if (request == null || organizer == null) {
-            return;
-        }
-        
+        if (request == null || organizer == null) return;
+
         organizer.setOrganizerName(request.getOrganizerName());
         organizer.setInstitution(request.getInstitution());
         organizer.setEventName(request.getEventName());

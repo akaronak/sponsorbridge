@@ -25,21 +25,21 @@ public class CompanyController {
     @PostMapping
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<CompanyDTO> createCompany(@Valid @RequestBody CompanyRequest request, Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
+        String userId = authentication.getName();
         CompanyDTO company = companyService.createCompany(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(company);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CompanyDTO> getCompanyById(@PathVariable Long id) {
+    public ResponseEntity<CompanyDTO> getCompanyById(@PathVariable String id) {
         CompanyDTO company = companyService.getCompanyById(id);
         return ResponseEntity.ok(company);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('COMPANY')")
-    public ResponseEntity<CompanyDTO> updateCompany(@PathVariable Long id, @Valid @RequestBody CompanyRequest request, Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
+    public ResponseEntity<CompanyDTO> updateCompany(@PathVariable String id, @Valid @RequestBody CompanyRequest request, Authentication authentication) {
+        String userId = authentication.getName();
         CompanyDTO company = companyService.updateCompany(id, userId, request);
         return ResponseEntity.ok(company);
     }

@@ -7,12 +7,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CompanyMapper {
-    
+
     public CompanyDTO toDTO(Company company) {
-        if (company == null) {
-            return null;
-        }
-        
+        if (company == null) return null;
+
         return CompanyDTO.builder()
                 .id(company.getId())
                 .companyName(company.getCompanyName())
@@ -29,12 +27,10 @@ public class CompanyMapper {
                 .verified(company.getVerified())
                 .build();
     }
-    
+
     public Company toEntity(CompanyRequest request) {
-        if (request == null) {
-            return null;
-        }
-        
+        if (request == null) return null;
+
         return Company.builder()
                 .companyName(request.getCompanyName())
                 .industry(request.getIndustry())
@@ -49,12 +45,10 @@ public class CompanyMapper {
                 .pastSponsorships(request.getPastSponsorships())
                 .build();
     }
-    
+
     public void updateEntityFromRequest(CompanyRequest request, Company company) {
-        if (request == null || company == null) {
-            return;
-        }
-        
+        if (request == null || company == null) return;
+
         company.setCompanyName(request.getCompanyName());
         company.setIndustry(request.getIndustry());
         company.setLocation(request.getLocation());

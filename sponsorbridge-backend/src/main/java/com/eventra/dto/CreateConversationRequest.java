@@ -14,13 +14,13 @@ import lombok.*;
 public class CreateConversationRequest {
 
     @NotNull(message = "Participant ID is required")
-    private Long participantId;
+    private String participantId;
 
     @NotBlank(message = "Event name is required")
     private String eventName;
 
     private String subject;
-    private Long requestId;
+    private String requestId;
 
     /**
      * Optional first message to send when creating the conversation.

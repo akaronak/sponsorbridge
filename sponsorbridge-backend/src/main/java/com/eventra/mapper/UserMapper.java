@@ -6,12 +6,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-    
+
     public UserDTO toDTO(User user) {
-        if (user == null) {
-            return null;
-        }
-        
+        if (user == null) return null;
+
         return UserDTO.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -19,12 +17,10 @@ public class UserMapper {
                 .role(user.getRole().toString())
                 .build();
     }
-    
+
     public User toEntity(UserDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        
+        if (dto == null) return null;
+
         return User.builder()
                 .id(dto.getId())
                 .email(dto.getEmail())

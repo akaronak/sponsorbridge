@@ -5,12 +5,16 @@ import com.eventra.entity.*;
 import com.eventra.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -27,27 +31,31 @@ public class ConversationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MongoTemplate mongoTemplate;
 
     // ── Conversation Management ──────────────────────────────────
 
-    /**
-     * Get all conversations for a user.
-     */
     @Transactional(readOnly = true)
-    public List<ConversationDTO> getConversations(Long userId) {
+    public List<ConversationDTO> getConversations(String userId) {
         List<Conversation> conversations = conversationRepository
                 .findByUserIdOrderByLastMessageAtDesc(userId);
 
+        // Batch fetch all user participants
+        Set<String> userIds = new HashSet<>();
+        conversations.forEach(c -> {
+            userIds.add(c.getCompanyId());
+            userIds.add(c.getOrganizerId());
+        });
+        Map<String, User> userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return conversations.stream()
-                .map(c -> toConversationDTO(c, userId))
+                .map(c -> toConversationDTO(c, userId, userMap))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get or create a conversation between two users for an event.
-     */
     @Transactional
-    public ConversationDTO getOrCreateConversation(Long userId, CreateConversationRequest request) {
+    public ConversationDTO getOrCreateConversation(String userId, CreateConversationRequest request) {
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
@@ -55,27 +63,30 @@ public class ConversationService {
                 .orElseThrow(() -> new RuntimeException("Participant not found: " + request.getParticipantId()));
 
         // Determine who is company vs organizer
-        User companyUser, organizerUser;
+        String companyUserId, organizerUserId;
         if (currentUser.getRole() == Role.COMPANY) {
-            companyUser = currentUser;
-            organizerUser = participant;
+            companyUserId = currentUser.getId();
+            organizerUserId = participant.getId();
         } else {
-            companyUser = participant;
-            organizerUser = currentUser;
+            companyUserId = participant.getId();
+            organizerUserId = currentUser.getId();
         }
 
         // Check for existing conversation
         Optional<Conversation> existing = conversationRepository.findExistingConversation(
-                companyUser.getId(), organizerUser.getId(), request.getEventName());
+                companyUserId, organizerUserId, request.getEventName());
 
         if (existing.isPresent()) {
-            return toConversationDTO(existing.get(), userId);
+            Map<String, User> userMap = Map.of(
+                    currentUser.getId(), currentUser,
+                    participant.getId(), participant);
+            return toConversationDTO(existing.get(), userId, userMap);
         }
 
         // Create new conversation
         Conversation conversation = Conversation.builder()
-                .company(companyUser)
-                .organizer(organizerUser)
+                .companyId(companyUserId)
+                .organizerId(organizerUserId)
                 .eventName(request.getEventName())
                 .subject(request.getSubject() != null ? request.getSubject() : "Re: " + request.getEventName())
                 .status(ConversationStatus.ACTIVE)
@@ -93,30 +104,32 @@ public class ConversationService {
         }
 
         log.info("Created conversation {} between user {} and user {} for event {}",
-                conversation.getId(), companyUser.getId(), organizerUser.getId(), request.getEventName());
+                conversation.getId(), companyUserId, organizerUserId, request.getEventName());
 
-        return toConversationDTO(conversation, userId);
+        Map<String, User> userMap = Map.of(
+                currentUser.getId(), currentUser,
+                participant.getId(), participant);
+        return toConversationDTO(conversation, userId, userMap);
     }
 
-    /**
-     * Get a single conversation by ID with authorization check.
-     */
     @Transactional(readOnly = true)
-    public ConversationDTO getConversation(Long conversationId, Long userId) {
+    public ConversationDTO getConversation(String conversationId, String userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found: " + conversationId));
 
         validateAccess(conversation, userId);
-        return toConversationDTO(conversation, userId);
+
+        Map<String, User> userMap = userRepository.findAllById(
+                        List.of(conversation.getCompanyId(), conversation.getOrganizerId())).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        return toConversationDTO(conversation, userId, userMap);
     }
 
     // ── Message Operations ───────────────────────────────────────
 
-    /**
-     * Send a message in a conversation.
-     */
     @Transactional
-    public ConversationMessageDTO sendMessage(Long senderId, SendMessageRequest request) {
+    public ConversationMessageDTO sendMessage(String senderId, SendMessageRequest request) {
         Conversation conversation = conversationRepository.findById(request.getConversationId())
                 .orElseThrow(() -> new RuntimeException("Conversation not found: " + request.getConversationId()));
 
@@ -125,7 +138,6 @@ public class ConversationService {
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + senderId));
 
-        // Determine message type
         MessageType messageType = MessageType.TEXT;
         if (request.getMessageType() != null) {
             try {
@@ -135,10 +147,9 @@ public class ConversationService {
             }
         }
 
-        // Build message
         ConversationMessage message = ConversationMessage.builder()
-                .conversation(conversation)
-                .sender(sender)
+                .conversationId(conversation.getId())
+                .senderId(senderId)
                 .messageType(messageType)
                 .content(request.getContent())
                 .status(MessageStatus.SENT)
@@ -163,8 +174,7 @@ public class ConversationService {
         conversation.incrementUnreadForRecipient(senderId);
         conversationRepository.save(conversation);
 
-        // Build DTO
-        ConversationMessageDTO dto = toMessageDTO(message);
+        ConversationMessageDTO dto = toMessageDTO(message, sender);
 
         // Broadcast via WebSocket
         broadcastMessage(conversation, dto, senderId);
@@ -178,37 +188,48 @@ public class ConversationService {
         return dto;
     }
 
-    /**
-     * Get messages for a conversation.
-     */
     @Transactional(readOnly = true)
-    public List<ConversationMessageDTO> getMessages(Long conversationId, Long userId) {
+    public List<ConversationMessageDTO> getMessages(String conversationId, String userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found: " + conversationId));
 
         validateAccess(conversation, userId);
 
-        return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId)
-                .stream()
-                .map(this::toMessageDTO)
+        List<ConversationMessage> messages = messageRepository
+                .findByConversationIdOrderByCreatedAtAsc(conversationId);
+
+        // Batch fetch all senders
+        Set<String> senderIds = messages.stream()
+                .map(ConversationMessage::getSenderId)
+                .collect(Collectors.toSet());
+        Map<String, User> userMap = userRepository.findAllById(senderIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        return messages.stream()
+                .map(m -> toMessageDTO(m, userMap.get(m.getSenderId())))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Mark all messages in a conversation as read for a user.
-     */
     @Transactional
-    public void markConversationAsRead(Long conversationId, Long userId) {
+    public void markConversationAsRead(String conversationId, String userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found: " + conversationId));
 
         validateAccess(conversation, userId);
 
-        int updated = messageRepository.markAllAsRead(conversationId, userId);
+        // Bulk update messages using MongoTemplate
+        Query query = new Query(Criteria.where("conversationId").is(conversationId)
+                .and("senderId").ne(userId)
+                .and("status").ne(MessageStatus.READ.name()));
+        Update update = new Update()
+                .set("status", MessageStatus.READ.name())
+                .set("readAt", LocalDateTime.now());
+        var result = mongoTemplate.updateMulti(query, update, ConversationMessage.class);
+        int updated = (int) result.getModifiedCount();
+
         conversation.markReadForUser(userId);
         conversationRepository.save(conversation);
 
-        // Broadcast read receipt via WebSocket
         messagingTemplate.convertAndSend(
                 "/topic/conversation/" + conversationId + "/read",
                 new ReadReceiptDTO(conversationId, userId, updated));
@@ -216,19 +237,18 @@ public class ConversationService {
         log.debug("Marked {} messages as read in conversation {} for user {}", updated, conversationId, userId);
     }
 
-    /**
-     * Get total unread message count for a user across all conversations.
-     */
     @Transactional(readOnly = true)
-    public int getTotalUnreadCount(Long userId) {
-        return conversationRepository.getTotalUnreadCount(userId);
+    public int getTotalUnreadCount(String userId) {
+        List<Conversation> conversations = conversationRepository
+                .findByUserIdOrderByLastMessageAtDesc(userId);
+
+        return conversations.stream()
+                .mapToInt(c -> c.getUnreadCountForUser(userId))
+                .sum();
     }
 
     // ── Typing Indicator ─────────────────────────────────────────
 
-    /**
-     * Broadcast typing status to conversation participants.
-     */
     public void broadcastTypingIndicator(TypingIndicatorDTO typing) {
         messagingTemplate.convertAndSend(
                 "/topic/conversation/" + typing.getConversationId() + "/typing",
@@ -237,30 +257,25 @@ public class ConversationService {
 
     // ── WebSocket Broadcasting ───────────────────────────────────
 
-    private void broadcastMessage(Conversation conversation, ConversationMessageDTO dto, Long senderId) {
-        // Broadcast to conversation topic
+    private void broadcastMessage(Conversation conversation, ConversationMessageDTO dto, String senderId) {
         messagingTemplate.convertAndSend(
                 "/topic/conversation/" + conversation.getId(),
                 dto);
 
-        // Send to recipient's personal queue for unread badge updates
-        Long recipientId = conversation.getCompany().getId().equals(senderId)
-                ? conversation.getOrganizer().getId()
-                : conversation.getCompany().getId();
+        String recipientId = conversation.getCompanyId().equals(senderId)
+                ? conversation.getOrganizerId()
+                : conversation.getCompanyId();
 
         messagingTemplate.convertAndSendToUser(
-                recipientId.toString(),
+                recipientId,
                 "/queue/messages",
                 dto);
     }
 
     private void createMessageNotification(Conversation conversation, User sender, ConversationMessage message) {
-        Long recipientId = conversation.getCompany().getId().equals(sender.getId())
-                ? conversation.getOrganizer().getId()
-                : conversation.getCompany().getId();
-
-        User recipient = userRepository.findById(recipientId).orElse(null);
-        if (recipient == null) return;
+        String recipientId = conversation.getCompanyId().equals(sender.getId())
+                ? conversation.getOrganizerId()
+                : conversation.getCompanyId();
 
         NotificationType notifType;
         String title;
@@ -283,7 +298,7 @@ public class ConversationService {
         }
 
         Notification notification = Notification.builder()
-                .user(recipient)
+                .userId(recipientId)
                 .notificationType(notifType)
                 .title(title)
                 .message(message.getContent().length() > 200
@@ -296,45 +311,47 @@ public class ConversationService {
 
         notification = notificationRepository.save(notification);
 
-        // Push notification via WebSocket
         NotificationDTO notifDTO = toNotificationDTO(notification);
         messagingTemplate.convertAndSendToUser(
-                recipientId.toString(),
+                recipientId,
                 "/queue/notifications",
                 notifDTO);
     }
 
     // ── Helper Methods ───────────────────────────────────────────
 
-    private void validateAccess(Conversation conversation, Long userId) {
-        boolean isCompany = conversation.getCompany().getId().equals(userId);
-        boolean isOrganizer = conversation.getOrganizer().getId().equals(userId);
+    private void validateAccess(Conversation conversation, String userId) {
+        boolean isCompany = conversation.getCompanyId().equals(userId);
+        boolean isOrganizer = conversation.getOrganizerId().equals(userId);
         if (!isCompany && !isOrganizer) {
             throw new RuntimeException("Access denied to conversation " + conversation.getId());
         }
     }
 
-    private ConversationDTO toConversationDTO(Conversation c, Long userId) {
-        Long participantId;
+    private ConversationDTO toConversationDTO(Conversation c, String userId, Map<String, User> userMap) {
+        String participantId;
         String participantName;
         String participantRole;
 
-        if (c.getCompany().getId().equals(userId)) {
-            participantId = c.getOrganizer().getId();
-            participantName = c.getOrganizer().getName();
+        User companyUser = userMap.get(c.getCompanyId());
+        User organizerUser = userMap.get(c.getOrganizerId());
+
+        if (c.getCompanyId().equals(userId)) {
+            participantId = c.getOrganizerId();
+            participantName = organizerUser != null ? organizerUser.getName() : null;
             participantRole = "ORGANIZER";
         } else {
-            participantId = c.getCompany().getId();
-            participantName = c.getCompany().getName();
+            participantId = c.getCompanyId();
+            participantName = companyUser != null ? companyUser.getName() : null;
             participantRole = "COMPANY";
         }
 
         return ConversationDTO.builder()
                 .id(c.getId())
-                .companyId(c.getCompany().getId())
-                .companyName(c.getCompany().getName())
-                .organizerId(c.getOrganizer().getId())
-                .organizerName(c.getOrganizer().getName())
+                .companyId(c.getCompanyId())
+                .companyName(companyUser != null ? companyUser.getName() : null)
+                .organizerId(c.getOrganizerId())
+                .organizerName(organizerUser != null ? organizerUser.getName() : null)
                 .eventName(c.getEventName())
                 .subject(c.getSubject())
                 .status(c.getStatus())
@@ -348,13 +365,13 @@ public class ConversationService {
                 .build();
     }
 
-    private ConversationMessageDTO toMessageDTO(ConversationMessage m) {
+    private ConversationMessageDTO toMessageDTO(ConversationMessage m, User sender) {
         return ConversationMessageDTO.builder()
                 .id(m.getId())
-                .conversationId(m.getConversation().getId())
-                .senderId(m.getSender().getId())
-                .senderName(m.getSender().getName())
-                .senderRole(m.getSender().getRole().name())
+                .conversationId(m.getConversationId())
+                .senderId(m.getSenderId())
+                .senderName(sender != null ? sender.getName() : null)
+                .senderRole(sender != null ? sender.getRole().name() : null)
                 .messageType(m.getMessageType())
                 .content(m.getContent())
                 .status(m.getStatus())
@@ -394,8 +411,8 @@ public class ConversationService {
     @lombok.Data
     @lombok.AllArgsConstructor
     public static class ReadReceiptDTO {
-        private Long conversationId;
-        private Long userId;
+        private String conversationId;
+        private String userId;
         private int messagesRead;
     }
 }

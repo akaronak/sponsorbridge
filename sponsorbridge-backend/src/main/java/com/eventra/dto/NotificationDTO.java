@@ -13,13 +13,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class NotificationDTO {
-    private Long id;
+    private String id;
     private NotificationType type;
     private String title;
     private String message;
-    private Long conversationId;
+    private String conversationId;
     private String actionUrl;
-    private Long actorId;
+    private String actorId;
     private String actorName;
     private boolean isRead;
     private LocalDateTime createdAt;

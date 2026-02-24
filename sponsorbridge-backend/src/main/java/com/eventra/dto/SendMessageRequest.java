@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class SendMessageRequest {
 
     @NotNull(message = "Conversation ID is required")
-    private Long conversationId;
+    private String conversationId;
 
     @NotBlank(message = "Content cannot be blank")
     @Size(max = 10000, message = "Content cannot exceed 10000 characters")
@@ -37,7 +37,7 @@ public class SendMessageRequest {
     private String proposalTerms;
     private String goodiesDescription;
     private LocalDateTime proposalDeadline;
-    private Long parentMessageId;
+    private String parentMessageId;
 
     // ── Optional attachment ──
 
