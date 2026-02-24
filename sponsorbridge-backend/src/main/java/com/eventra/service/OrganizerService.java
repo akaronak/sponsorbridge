@@ -7,6 +7,9 @@ import com.eventra.mapper.OrganizerMapper;
 import com.eventra.repository.OrganizerRepository;
 import com.eventra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,12 +47,14 @@ public class OrganizerService {
         return organizerMapper.toDTO(saved);
     }
 
+    @Cacheable(value = "organizer-detail", key = "#organizerId")
     public OrganizerDTO getOrganizerById(String organizerId) {
         Organizer organizer = organizerRepository.findById(organizerId)
                 .orElseThrow(() -> new RuntimeException("Organizer not found"));
         return organizerMapper.toDTO(organizer);
     }
 
+    @CacheEvict(value = "organizer-detail", key = "#organizerId")
     public OrganizerDTO updateOrganizer(String organizerId, String userId, OrganizerRequest request, MultipartFile proposalFile) {
         Organizer organizer = organizerRepository.findById(organizerId)
                 .orElseThrow(() -> new RuntimeException("Organizer not found"));
@@ -75,6 +80,7 @@ public class OrganizerService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "organizer-detail", key = "#organizerId")
     public OrganizerDTO approveOrganizer(String organizerId) {
         Organizer organizer = organizerRepository.findById(organizerId)
                 .orElseThrow(() -> new RuntimeException("Organizer not found"));
@@ -82,6 +88,7 @@ public class OrganizerService {
         return organizerMapper.toDTO(organizerRepository.save(organizer));
     }
 
+    @CacheEvict(value = "organizer-detail", key = "#organizerId")
     public OrganizerDTO rejectOrganizer(String organizerId) {
         Organizer organizer = organizerRepository.findById(organizerId)
                 .orElseThrow(() -> new RuntimeException("Organizer not found"));

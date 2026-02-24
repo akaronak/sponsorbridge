@@ -16,10 +16,24 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service for Company (Sponsor) management.
+ *
+ * <h3>Caching strategy:</h3>
+ * <ul>
+ *   <li>{@code sponsors} cache: All verified companies listing (10 min TTL)</li>
+ *   <li>{@code sponsor-detail} cache: Individual company by ID (5 min TTL)</li>
+ *   <li>Eviction: On create, update, approve, reject — cascading evict both caches</li>
+ * </ul>
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,6 +43,9 @@ public class CompanyService {
     private final CompanyMapper companyMapper;
     private final MongoTemplate mongoTemplate;
 
+    @Caching(evict = {
+        @CacheEvict(value = "sponsors", allEntries = true)
+    })
     public CompanyDTO createCompany(String userId, CompanyRequest request) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -45,12 +62,17 @@ public class CompanyService {
         return companyMapper.toDTO(saved);
     }
 
+    @Cacheable(value = "sponsor-detail", key = "#companyId")
     public CompanyDTO getCompanyById(String companyId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
         return companyMapper.toDTO(company);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "sponsor-detail", key = "#companyId"),
+        @CacheEvict(value = "sponsors", allEntries = true)
+    })
     public CompanyDTO updateCompany(String companyId, String userId, CompanyRequest request) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
@@ -108,6 +130,10 @@ public class CompanyService {
                 .collect(Collectors.toList());
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "sponsor-detail", key = "#companyId"),
+        @CacheEvict(value = "sponsors", allEntries = true)
+    })
     public CompanyDTO approveCompany(String companyId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
@@ -115,6 +141,10 @@ public class CompanyService {
         return companyMapper.toDTO(companyRepository.save(company));
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "sponsor-detail", key = "#companyId"),
+        @CacheEvict(value = "sponsors", allEntries = true)
+    })
     public CompanyDTO rejectCompany(String companyId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));

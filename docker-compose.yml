@@ -1,22 +1,97 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: Eventra-db
+  # ─── MongoDB ──────────────────────────────────────────
+  # Local dev: standalone replica set for transaction support
+  # Production: use MongoDB Atlas (SRV connection string)
+  mongodb:
+    image: mongo:7.0
+    container_name: eventra-mongodb
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     environment:
-      POSTGRES_DB: Eventra
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MONGO_INITDB_DATABASE: eventra
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Initialize replica set (required for transactions)
+  mongodb-init:
+    image: mongo:7.0
+    container_name: eventra-mongodb-init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    entrypoint: >
+      mongosh --host mongodb:27017 --eval '
+        rs.initiate({
+          _id: "rs0",
+          members: [{ _id: 0, host: "mongodb:27017" }]
+        })
+      '
+    restart: "no"
+
+  # ─── Redis ───────────────────────────────────────────
+  # Used for: caching, rate limiting, session state
+  redis:
+    image: redis:7.4-alpine
+    container_name: eventra-redis
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Eventra Backend ─────────────────────────────────
+  eventra-backend:
+    build:
+      context: ./sponsorbridge-backend
+      dockerfile: Dockerfile
+    container_name: eventra-backend
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      MONGODB_URI: mongodb://mongodb:27017/eventra?replicaSet=rs0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-256-bit-minimum}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
 volumes:
-  postgres_data:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+

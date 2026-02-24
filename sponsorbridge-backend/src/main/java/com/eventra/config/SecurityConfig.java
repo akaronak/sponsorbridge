@@ -61,6 +61,12 @@ public class SecurityConfig {
                         // WebSocket endpoints (auth handled at STOMP level)
                         .requestMatchers("/ws/**").permitAll()
 
+                        // Razorpay webhooks (verified via HMAC signature, not JWT)
+                        .requestMatchers("/api/webhooks/**").permitAll()
+
+                        // Payment endpoints - require authentication
+                        .requestMatchers("/api/payments/**").authenticated()
+
                         // Conversation & messaging endpoints
                         .requestMatchers("/api/conversations/**").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()

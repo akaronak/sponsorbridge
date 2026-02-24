@@ -5,6 +5,8 @@ import com.eventra.dto.LoginRequest;
 import com.eventra.dto.LoginResponse;
 import com.eventra.dto.RegisterRequest;
 import com.eventra.dto.UserDTO;
+import com.eventra.filter.RateLimitFilter;
+import com.eventra.infrastructure.DistributedRateLimiter;
 import com.eventra.security.CustomUserDetailsService;
 import com.eventra.security.JwtAuthenticationFilter;
 import com.eventra.security.JwtTokenProvider;
@@ -42,6 +44,9 @@ class AuthControllerTest {
 
     @MockBean
     private CustomUserDetailsService customUserDetailsService;
+
+    @MockBean
+    private DistributedRateLimiter distributedRateLimiter;
 
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;

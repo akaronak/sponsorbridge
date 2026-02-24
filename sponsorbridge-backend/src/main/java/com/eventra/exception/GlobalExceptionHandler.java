@@ -2,6 +2,7 @@ package com.eventra.exception;
 
 import com.eventra.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -17,10 +18,55 @@ import java.util.Map;
 
 /**
  * Global exception handler that translates exceptions into structured JSON error responses.
+ * Handles rate limiting (429), validation errors, auth errors, and general exceptions.
  */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    // ─── Rate Limiting ──────────────────────────────────
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(RateLimitExceededException ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(429)
+                .message(ex.getMessage())
+                .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        headers.set("X-RateLimit-Remaining", "0");
+
+        return ResponseEntity.status(429).headers(headers).body(error);
+    }
+
+    // ─── Business Exceptions ────────────────────────────
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentException(PaymentException ex) {
+        log.error("Payment error: {} [paymentId={}, errorCode={}]",
+                ex.getMessage(), ex.getPaymentId(), ex.getErrorCode());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_GATEWAY.value())
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
+    }
+
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ErrorResponse> handleIdempotencyConflict(IdempotencyConflictException ex) {
+        log.warn("Idempotency conflict: {} [key={}, existingPaymentId={}]",
+                ex.getMessage(), ex.getIdempotencyKey(), ex.getExistingPaymentId());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
@@ -65,6 +111,8 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    // ─── Validation / Spring Security ───────────────────
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
@@ -114,6 +162,8 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    // ─── Catch-all ──────────────────────────────────────
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
