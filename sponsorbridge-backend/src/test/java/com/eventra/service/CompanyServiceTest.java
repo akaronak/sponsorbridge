@@ -18,6 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +42,9 @@ class CompanyServiceTest {
     @Mock
     private CompanyMapper companyMapper;
 
+    @Mock
+    private MongoTemplate mongoTemplate;
+
     @InjectMocks
     private CompanyService companyService;
 
@@ -50,7 +56,7 @@ class CompanyServiceTest {
     @BeforeEach
     void setUp() {
         testUser = User.builder()
-                .id(1L)
+                .id("1")
                 .email("company@example.com")
                 .passwordHash("hashedPassword")
                 .name("Company User")
@@ -74,8 +80,8 @@ class CompanyServiceTest {
                 .build();
 
         testCompany = Company.builder()
-                .id(1L)
-                .user(testUser)
+                .id("1")
+                .userId("1")
                 .companyName("Tech Corp")
                 .industry("Technology")
                 .location("San Francisco")
@@ -93,7 +99,7 @@ class CompanyServiceTest {
                 .build();
 
         testCompanyDTO = CompanyDTO.builder()
-                .id(1L)
+                .id("1")
                 .companyName("Tech Corp")
                 .industry("Technology")
                 .location("San Francisco")
@@ -112,14 +118,14 @@ class CompanyServiceTest {
     @Test
     void testCreateCompanySuccess() {
         // Arrange
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(companyRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById("1")).thenReturn(Optional.of(testUser));
+        when(companyRepository.findByUserId("1")).thenReturn(Optional.empty());
         when(companyRepository.save(any(Company.class))).thenReturn(testCompany);
         when(companyMapper.toEntity(testCompanyRequest)).thenReturn(testCompany);
         when(companyMapper.toDTO(testCompany)).thenReturn(testCompanyDTO);
 
         // Act
-        CompanyDTO result = companyService.createCompany(1L, testCompanyRequest);
+        CompanyDTO result = companyService.createCompany("1", testCompanyRequest);
 
         // Assert
         assertNotNull(result);
@@ -131,11 +137,11 @@ class CompanyServiceTest {
     @Test
     void testGetCompanyById() {
         // Arrange
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
         when(companyMapper.toDTO(testCompany)).thenReturn(testCompanyDTO);
 
         // Act
-        CompanyDTO result = companyService.getCompanyById(1L);
+        CompanyDTO result = companyService.getCompanyById("1");
 
         // Assert
         assertNotNull(result);
@@ -145,12 +151,12 @@ class CompanyServiceTest {
     @Test
     void testUpdateCompanySuccess() {
         // Arrange
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
         when(companyRepository.save(any(Company.class))).thenReturn(testCompany);
         when(companyMapper.toDTO(testCompany)).thenReturn(testCompanyDTO);
 
         // Act
-        CompanyDTO result = companyService.updateCompany(1L, 1L, testCompanyRequest);
+        CompanyDTO result = companyService.updateCompany("1", "1", testCompanyRequest);
 
         // Assert
         assertNotNull(result);
@@ -161,10 +167,10 @@ class CompanyServiceTest {
     @Test
     void testUpdateCompanyUnauthorized() {
         // Arrange
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> companyService.updateCompany(1L, 999L, testCompanyRequest));
+        assertThrows(RuntimeException.class, () -> companyService.updateCompany("1", "999", testCompanyRequest));
     }
 
     @Test
@@ -180,21 +186,21 @@ class CompanyServiceTest {
                 .build();
 
         Company updatedCompany = Company.builder()
-                .id(1L)
+                .id("1")
                 .companyName("Updated Corp")
                 .industry("Finance")
                 .location("New York")
                 .website("https://updated.com")
                 .contactPerson("Jane Doe")
                 .sponsorshipTypes(new String[]{"Platinum"})
-                .user(testUser)
+                .userId("1")
                 .verified(false)
                 .build();
 
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
         when(companyRepository.save(any(Company.class))).thenReturn(updatedCompany);
         when(companyMapper.toDTO(updatedCompany)).thenReturn(CompanyDTO.builder()
-                .id(1L)
+                .id("1")
                 .companyName("Updated Corp")
                 .industry("Finance")
                 .location("New York")
@@ -204,7 +210,7 @@ class CompanyServiceTest {
                 .verified(false)
                 .build());
 
-        CompanyDTO result = companyService.updateCompany(1L, 1L, updateRequest);
+        CompanyDTO result = companyService.updateCompany("1", "1", updateRequest);
 
         assertEquals("Updated Corp", result.getCompanyName());
         assertEquals("Finance", result.getIndustry());
@@ -215,13 +221,13 @@ class CompanyServiceTest {
     void testApproveCompany() {
         // Arrange
         testCompany.setVerified(false);
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
         when(companyRepository.save(any(Company.class))).thenReturn(testCompany);
         testCompanyDTO.setVerified(true);
         when(companyMapper.toDTO(testCompany)).thenReturn(testCompanyDTO);
 
         // Act
-        CompanyDTO result = companyService.approveCompany(1L);
+        CompanyDTO result = companyService.approveCompany("1");
 
         // Assert
         assertTrue(result.getVerified());
@@ -247,9 +253,8 @@ class CompanyServiceTest {
     void testSearchCompanies() {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Company> page = new PageImpl<>(Arrays.asList(testCompany), pageable, 1);
-        when(companyRepository.searchCompanies("San Francisco", "Technology", "Conference", pageable))
-                .thenReturn(page);
+        when(mongoTemplate.find(any(Query.class), eq(Company.class))).thenReturn(Arrays.asList(testCompany));
+        when(mongoTemplate.count(any(Query.class), eq(Company.class))).thenReturn(1L);
         when(companyMapper.toDTO(testCompany)).thenReturn(testCompanyDTO);
 
         // Act
@@ -286,13 +291,13 @@ class CompanyServiceTest {
                 .sponsorshipTypes(new String[]{"Gold"})
                 .budgetMin(budgetMin)
                 .budgetMax(budgetMax)
-                .user(testUser)
+                .userId("1")
                 .verified(false)
                 .build();
 
         when(companyMapper.toEntity(request)).thenReturn(company);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(companyRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById("1")).thenReturn(Optional.of(testUser));
+        when(companyRepository.findByUserId("1")).thenReturn(Optional.empty());
         when(companyRepository.save(any(Company.class))).thenReturn(company);
         when(companyMapper.toDTO(company)).thenReturn(CompanyDTO.builder()
                 .companyName("Tech Corp")
@@ -306,7 +311,7 @@ class CompanyServiceTest {
                 .verified(false)
                 .build());
 
-        CompanyDTO result = companyService.createCompany(1L, request);
+        CompanyDTO result = companyService.createCompany("1", request);
 
         assertEquals(budgetMin, result.getBudgetMin());
         assertEquals(budgetMax, result.getBudgetMax());

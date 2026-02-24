@@ -66,7 +66,7 @@ class AuthServiceTest {
                 .build();
 
         testUser = User.builder()
-                .id(1L)
+                .id("1")
                 .email("test@example.com")
                 .passwordHash("hashedPassword")
                 .name("Test User")
@@ -76,7 +76,7 @@ class AuthServiceTest {
                 .build();
 
         testUserDTO = UserDTO.builder()
-                .id(1L)
+                .id("1")
                 .email("test@example.com")
                 .name("Test User")
                 .role("ORGANIZER")
@@ -103,7 +103,7 @@ class AuthServiceTest {
         assertEquals("test@example.com", result.getUser().getEmail());
         assertEquals("Test User", result.getUser().getName());
         assertEquals("ORGANIZER", result.getUser().getRole());
-        assertEquals(1L, result.getUserId());
+        assertEquals("1", result.getUserId());
         assertEquals(86400000L, result.getExpiresIn());
         verify(userRepository).existsByEmail(registerRequest.getEmail());
         verify(passwordEncoder).encode(registerRequest.getPassword());
@@ -132,7 +132,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("hashedPassword");
         
         User companyUser = User.builder()
-                .id(2L)
+                .id("2")
                 .email("company@example.com")
                 .passwordHash("hashedPassword")
                 .name("Company User")
@@ -142,7 +142,7 @@ class AuthServiceTest {
                 .build();
         
         UserDTO companyUserDTO = UserDTO.builder()
-                .id(2L)
+                .id("2")
                 .email("company@example.com")
                 .name("Company User")
                 .role("COMPANY")
@@ -192,7 +192,7 @@ class AuthServiceTest {
         assertNotNull(result);
         assertEquals("jwt-token-123", result.getToken());
         assertEquals("ORGANIZER", result.getRole());
-        assertEquals(1L, result.getUserId());
+        assertEquals("1", result.getUserId());
         assertEquals(86400000L, result.getExpiresIn());
         assertNotNull(result.getUser());
         assertEquals("test@example.com", result.getUser().getEmail());
@@ -229,7 +229,7 @@ class AuthServiceTest {
         assertEquals("Invalid email or password", exception.getMessage());
         verify(userRepository).findByEmail(loginRequest.getEmail());
         verify(passwordEncoder).matches(loginRequest.getPassword(), testUser.getPasswordHash());
-        verify(jwtTokenProvider, never()).generateToken(anyLong(), anyString());
+        verify(jwtTokenProvider, never()).generateToken(anyString(), anyString());
     }
 
     @Test
@@ -284,7 +284,7 @@ class AuthServiceTest {
     void testLoginWithDifferentRoles() {
         // Test with COMPANY role
         User companyUser = User.builder()
-                .id(2L)
+                .id("2")
                 .email("company@example.com")
                 .passwordHash("hashedPassword")
                 .name("Company User")
@@ -294,7 +294,7 @@ class AuthServiceTest {
                 .build();
 
         UserDTO companyUserDTO = UserDTO.builder()
-                .id(2L)
+                .id("2")
                 .email("company@example.com")
                 .name("Company User")
                 .role("COMPANY")
@@ -316,7 +316,7 @@ class AuthServiceTest {
 
         // Assert
         assertEquals("COMPANY", result.getRole());
-        assertEquals(2L, result.getUserId());
+        assertEquals("2", result.getUserId());
         assertNotNull(result.getUser());
         assertEquals("COMPANY", result.getUser().getRole());
     }

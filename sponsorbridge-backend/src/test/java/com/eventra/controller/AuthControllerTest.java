@@ -5,15 +5,17 @@ import com.eventra.dto.LoginRequest;
 import com.eventra.dto.LoginResponse;
 import com.eventra.dto.RegisterRequest;
 import com.eventra.dto.UserDTO;
+import com.eventra.security.CustomUserDetailsService;
+import com.eventra.security.JwtAuthenticationFilter;
+import com.eventra.security.JwtTokenProvider;
 import com.eventra.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.*;
@@ -22,9 +24,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
     @Autowired
@@ -35,6 +36,12 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
@@ -56,7 +63,7 @@ class AuthControllerTest {
                 .build();
 
         UserDTO userDTO = UserDTO.builder()
-                .id(1L)
+                .id("1")
                 .email("test@example.com")
                 .name("Test User")
                 .role("ORGANIZER")
@@ -66,7 +73,7 @@ class AuthControllerTest {
                 .token("jwt-token-register")
                 .user(userDTO)
                 .role("ORGANIZER")
-                .userId(1L)
+                .userId("1")
                 .expiresIn(86400000L)
                 .build();
 
@@ -74,7 +81,7 @@ class AuthControllerTest {
                 .token("jwt-token-123")
                 .user(userDTO)
                 .role("ORGANIZER")
-                .userId(1L)
+                .userId("1")
                 .expiresIn(86400000L)
                 .build();
     }
@@ -90,7 +97,7 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token", is("jwt-token-register")))
-                .andExpect(jsonPath("$.user.id", is(1)))
+                .andExpect(jsonPath("$.user.id", is("1")))
                 .andExpect(jsonPath("$.user.email", is("test@example.com")))
                 .andExpect(jsonPath("$.user.name", is("Test User")))
                 .andExpect(jsonPath("$.user.role", is("ORGANIZER")));
@@ -217,7 +224,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token", is("jwt-token-123")))
                 .andExpect(jsonPath("$.role", is("ORGANIZER")))
-                .andExpect(jsonPath("$.userId", is(1)))
+                .andExpect(jsonPath("$.userId", is("1")))
                 .andExpect(jsonPath("$.expiresIn", is(86400000)))
                 .andExpect(jsonPath("$.user.email", is("test@example.com")))
                 .andExpect(jsonPath("$.user.name", is("Test User")));
@@ -338,7 +345,7 @@ class AuthControllerTest {
                 .build();
 
         UserDTO companyDTO = UserDTO.builder()
-                .id(2L)
+                .id("2")
                 .email("company@example.com")
                 .name("Company User")
                 .role("COMPANY")
@@ -348,7 +355,7 @@ class AuthControllerTest {
                 .token("company-jwt-token")
                 .user(companyDTO)
                 .role("COMPANY")
-                .userId(2L)
+                .userId("2")
                 .expiresIn(86400000L)
                 .build();
 

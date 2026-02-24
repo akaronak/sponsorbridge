@@ -47,7 +47,7 @@ class OrganizerServiceTest {
     @BeforeEach
     void setUp() {
         testUser = User.builder()
-                .id(1L)
+                .id("1")
                 .email("organizer@test.com")
                 .name("Test Organizer")
                 .role(Role.ORGANIZER)
@@ -64,8 +64,8 @@ class OrganizerServiceTest {
                 .build();
 
         testOrganizer = Organizer.builder()
-                .id(1L)
-                .user(testUser)
+                .id("1")
+                .userId("1")
                 .organizerName("Tech Community")
                 .institution("University XYZ")
                 .eventName("Tech Fest 2024")
@@ -79,7 +79,7 @@ class OrganizerServiceTest {
                 .build();
 
         organizerDTO = OrganizerDTO.builder()
-                .id(1L)
+                .id("1")
                 .organizerName("Tech Community")
                 .institution("University XYZ")
                 .eventName("Tech Fest 2024")
@@ -93,13 +93,13 @@ class OrganizerServiceTest {
 
     @Test
     void testCreateOrganizerSuccess() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(organizerRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById("1")).thenReturn(Optional.of(testUser));
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.empty());
         when(organizerMapper.toEntity(organizerRequest)).thenReturn(testOrganizer);
         when(organizerRepository.save(any(Organizer.class))).thenReturn(testOrganizer);
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.createOrganizer(1L, organizerRequest, null);
+        OrganizerDTO result = organizerService.createOrganizer("1", organizerRequest, null);
 
         assertNotNull(result);
         assertEquals("Tech Community", result.getOrganizerName());
@@ -111,14 +111,14 @@ class OrganizerServiceTest {
     @Test
     void testCreateOrganizerWithProposal() {
         MultipartFile mockFile = mock(MultipartFile.class);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(organizerRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById("1")).thenReturn(Optional.of(testUser));
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.empty());
         when(organizerMapper.toEntity(organizerRequest)).thenReturn(testOrganizer);
         when(fileUploadService.uploadProposal(mockFile)).thenReturn("https://cloudinary.com/proposal.pdf");
         when(organizerRepository.save(any(Organizer.class))).thenReturn(testOrganizer);
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.createOrganizer(1L, organizerRequest, mockFile);
+        OrganizerDTO result = organizerService.createOrganizer("1", organizerRequest, mockFile);
 
         assertNotNull(result);
         verify(fileUploadService, times(1)).uploadProposal(mockFile);
@@ -127,25 +127,25 @@ class OrganizerServiceTest {
 
     @Test
     void testCreateOrganizerUserNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById("1")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> organizerService.createOrganizer(1L, organizerRequest, null));
+        assertThrows(RuntimeException.class, () -> organizerService.createOrganizer("1", organizerRequest, null));
     }
 
     @Test
     void testCreateOrganizerAlreadyExists() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(organizerRepository.findByUserId(1L)).thenReturn(Optional.of(testOrganizer));
+        when(userRepository.findById("1")).thenReturn(Optional.of(testUser));
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.of(testOrganizer));
 
-        assertThrows(RuntimeException.class, () -> organizerService.createOrganizer(1L, organizerRequest, null));
+        assertThrows(RuntimeException.class, () -> organizerService.createOrganizer("1", organizerRequest, null));
     }
 
     @Test
     void testGetOrganizerByIdSuccess() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.getOrganizerById(1L);
+        OrganizerDTO result = organizerService.getOrganizerById("1");
 
         assertNotNull(result);
         assertEquals("Tech Community", result.getOrganizerName());
@@ -153,18 +153,18 @@ class OrganizerServiceTest {
 
     @Test
     void testGetOrganizerByIdNotFound() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.empty());
+        when(organizerRepository.findById("1")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> organizerService.getOrganizerById(1L));
+        assertThrows(RuntimeException.class, () -> organizerService.getOrganizerById("1"));
     }
 
     @Test
     void testUpdateOrganizerSuccess() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
         when(organizerRepository.save(any(Organizer.class))).thenReturn(testOrganizer);
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.updateOrganizer(1L, 1L, organizerRequest, null);
+        OrganizerDTO result = organizerService.updateOrganizer("1", "1", organizerRequest, null);
 
         assertNotNull(result);
         verify(organizerRepository, times(1)).save(any(Organizer.class));
@@ -172,22 +172,21 @@ class OrganizerServiceTest {
 
     @Test
     void testUpdateOrganizerUnauthorized() {
-        User differentUser = User.builder().id(2L).build();
-        testOrganizer.setUser(differentUser);
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
+        testOrganizer.setUserId("2");
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
 
-        assertThrows(RuntimeException.class, () -> organizerService.updateOrganizer(1L, 1L, organizerRequest, null));
+        assertThrows(RuntimeException.class, () -> organizerService.updateOrganizer("1", "1", organizerRequest, null));
     }
 
     @Test
     void testUpdateOrganizerWithProposal() {
         MultipartFile mockFile = mock(MultipartFile.class);
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
         when(fileUploadService.uploadProposal(mockFile)).thenReturn("https://cloudinary.com/new-proposal.pdf");
         when(organizerRepository.save(any(Organizer.class))).thenReturn(testOrganizer);
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.updateOrganizer(1L, 1L, organizerRequest, mockFile);
+        OrganizerDTO result = organizerService.updateOrganizer("1", "1", organizerRequest, mockFile);
 
         assertNotNull(result);
         verify(fileUploadService, times(1)).uploadProposal(mockFile);
@@ -208,12 +207,12 @@ class OrganizerServiceTest {
 
     @Test
     void testApproveOrganizerSuccess() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
         when(organizerRepository.save(any(Organizer.class))).thenReturn(testOrganizer);
         organizerDTO.setVerified(true);
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.approveOrganizer(1L);
+        OrganizerDTO result = organizerService.approveOrganizer("1");
 
         assertNotNull(result);
         assertTrue(result.getVerified());
@@ -222,11 +221,11 @@ class OrganizerServiceTest {
 
     @Test
     void testRejectOrganizerSuccess() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
         when(organizerRepository.save(any(Organizer.class))).thenReturn(testOrganizer);
         when(organizerMapper.toDTO(testOrganizer)).thenReturn(organizerDTO);
 
-        OrganizerDTO result = organizerService.rejectOrganizer(1L);
+        OrganizerDTO result = organizerService.rejectOrganizer("1");
 
         assertNotNull(result);
         assertFalse(result.getVerified());

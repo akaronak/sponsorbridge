@@ -5,9 +5,7 @@ import com.eventra.dto.RequestRequest;
 import com.eventra.entity.Company;
 import com.eventra.entity.Organizer;
 import com.eventra.entity.RequestStatus;
-import com.eventra.entity.Role;
 import com.eventra.entity.SponsorshipRequest;
-import com.eventra.entity.User;
 import com.eventra.mapper.RequestMapper;
 import com.eventra.repository.CompanyRepository;
 import com.eventra.repository.OrganizerRepository;
@@ -31,7 +29,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,8 +45,6 @@ class RequestServiceTest {
     @InjectMocks
     private RequestService requestService;
 
-    private User organizerUser;
-    private User companyUser;
     private Organizer testOrganizer;
     private Company testCompany;
     private RequestRequest requestRequest;
@@ -57,23 +53,9 @@ class RequestServiceTest {
 
     @BeforeEach
     void setUp() {
-        organizerUser = User.builder()
-                .id(1L)
-                .email("organizer@test.com")
-                .name("Test Organizer")
-                .role(Role.ORGANIZER)
-                .build();
-
-        companyUser = User.builder()
-                .id(2L)
-                .email("company@test.com")
-                .name("Test Company")
-                .role(Role.COMPANY)
-                .build();
-
         testOrganizer = Organizer.builder()
-                .id(1L)
-                .user(organizerUser)
+                .id("1")
+                .userId("1")
                 .organizerName("Tech Community")
                 .institution("University XYZ")
                 .eventName("Tech Fest 2024")
@@ -84,8 +66,8 @@ class RequestServiceTest {
                 .build();
 
         testCompany = Company.builder()
-                .id(1L)
-                .user(companyUser)
+                .id("1")
+                .userId("2")
                 .companyName("Tech Corp")
                 .industry("Technology")
                 .location("New York")
@@ -96,7 +78,7 @@ class RequestServiceTest {
                 .build();
 
         requestRequest = RequestRequest.builder()
-                .companyId(1L)
+                .companyId("1")
                 .eventSummary("Annual tech conference")
                 .expectedAudienceSize(500)
                 .offering("Booth space and networking")
@@ -105,9 +87,9 @@ class RequestServiceTest {
                 .build();
 
         testRequest = SponsorshipRequest.builder()
-                .id(1L)
-                .organizer(testOrganizer)
-                .company(testCompany)
+                .id("1")
+                .organizerId("1")
+                .companyId("1")
                 .eventSummary("Annual tech conference")
                 .expectedAudienceSize(500)
                 .offering("Booth space and networking")
@@ -119,10 +101,10 @@ class RequestServiceTest {
                 .build();
 
         requestDTO = RequestDTO.builder()
-                .id(1L)
-                .organizerId(1L)
+                .id("1")
+                .organizerId("1")
                 .organizerName("Tech Community")
-                .companyId(1L)
+                .companyId("1")
                 .companyName("Tech Corp")
                 .eventSummary("Annual tech conference")
                 .expectedAudienceSize(500)
@@ -135,14 +117,14 @@ class RequestServiceTest {
 
     @Test
     void testCreateRequestSuccess() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
-        when(requestRepository.existsDuplicateRequest(anyLong(), anyLong(), any())).thenReturn(false);
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.of(testOrganizer));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
+        when(requestRepository.countDuplicateRequests(anyString(), anyString(), any())).thenReturn(0L);
         when(requestMapper.toEntity(requestRequest)).thenReturn(testRequest);
         when(requestRepository.save(any(SponsorshipRequest.class))).thenReturn(testRequest);
-        when(requestMapper.toDTO(testRequest)).thenReturn(requestDTO);
+        when(requestMapper.toDTO(testRequest, testOrganizer, testCompany)).thenReturn(requestDTO);
 
-        RequestDTO result = requestService.createRequest(1L, requestRequest);
+        RequestDTO result = requestService.createRequest("1", requestRequest);
 
         assertNotNull(result);
         assertEquals("Annual tech conference", result.getEventSummary());
@@ -153,34 +135,36 @@ class RequestServiceTest {
 
     @Test
     void testCreateRequestOrganizerNotFound() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.empty());
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> requestService.createRequest(1L, requestRequest));
+        assertThrows(RuntimeException.class, () -> requestService.createRequest("1", requestRequest));
     }
 
     @Test
     void testCreateRequestCompanyNotFound() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
-        when(companyRepository.findById(1L)).thenReturn(Optional.empty());
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.of(testOrganizer));
+        when(companyRepository.findById("1")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> requestService.createRequest(1L, requestRequest));
+        assertThrows(RuntimeException.class, () -> requestService.createRequest("1", requestRequest));
     }
 
     @Test
     void testCreateRequestDuplicate() {
-        when(organizerRepository.findById(1L)).thenReturn(Optional.of(testOrganizer));
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(testCompany));
-        when(requestRepository.existsDuplicateRequest(anyLong(), anyLong(), any())).thenReturn(true);
+        when(organizerRepository.findByUserId("1")).thenReturn(Optional.of(testOrganizer));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
+        when(requestRepository.countDuplicateRequests(anyString(), anyString(), any())).thenReturn(1L);
 
-        assertThrows(RuntimeException.class, () -> requestService.createRequest(1L, requestRequest));
+        assertThrows(RuntimeException.class, () -> requestService.createRequest("1", requestRequest));
     }
 
     @Test
     void testGetRequestByIdSuccess() {
-        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
-        when(requestMapper.toDTO(testRequest)).thenReturn(requestDTO);
+        when(requestRepository.findById("1")).thenReturn(Optional.of(testRequest));
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
+        when(requestMapper.toDTO(testRequest, testOrganizer, testCompany)).thenReturn(requestDTO);
 
-        RequestDTO result = requestService.getRequestById(1L);
+        RequestDTO result = requestService.getRequestById("1");
 
         assertNotNull(result);
         assertEquals("Annual tech conference", result.getEventSummary());
@@ -188,9 +172,9 @@ class RequestServiceTest {
 
     @Test
     void testGetRequestByIdNotFound() {
-        when(requestRepository.findById(1L)).thenReturn(Optional.empty());
+        when(requestRepository.findById("1")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> requestService.getRequestById(1L));
+        assertThrows(RuntimeException.class, () -> requestService.getRequestById("1"));
     }
 
     @Test
@@ -199,14 +183,16 @@ class RequestServiceTest {
         List<SponsorshipRequest> requests = Arrays.asList(testRequest);
         Page<SponsorshipRequest> page = new PageImpl<>(requests, pageable, 1);
 
-        when(requestRepository.findByOrganizerIdOrderByCreatedAtDesc(1L, pageable)).thenReturn(page);
-        when(requestMapper.toDTO(testRequest)).thenReturn(requestDTO);
+        when(requestRepository.findByOrganizerIdOrderByCreatedAtDesc("1", pageable)).thenReturn(page);
+        when(organizerRepository.findAllById(any())).thenReturn(Arrays.asList(testOrganizer));
+        when(companyRepository.findAllById(any())).thenReturn(Arrays.asList(testCompany));
+        when(requestMapper.toDTO(testRequest, testOrganizer, testCompany)).thenReturn(requestDTO);
 
-        Page<RequestDTO> result = requestService.getRequestsByOrganizer(1L, null, pageable);
+        Page<RequestDTO> result = requestService.getRequestsByOrganizer("1", null, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(requestRepository, times(1)).findByOrganizerIdOrderByCreatedAtDesc(1L, pageable);
+        verify(requestRepository, times(1)).findByOrganizerIdOrderByCreatedAtDesc("1", pageable);
     }
 
     @Test
@@ -215,15 +201,17 @@ class RequestServiceTest {
         List<SponsorshipRequest> requests = Arrays.asList(testRequest);
         Page<SponsorshipRequest> page = new PageImpl<>(requests, pageable, 1);
 
-        when(requestRepository.findByOrganizerIdAndStatusOrderByCreatedAtDesc(1L, RequestStatus.PENDING, pageable))
+        when(requestRepository.findByOrganizerIdAndStatusOrderByCreatedAtDesc("1", RequestStatus.PENDING, pageable))
                 .thenReturn(page);
-        when(requestMapper.toDTO(testRequest)).thenReturn(requestDTO);
+        when(organizerRepository.findAllById(any())).thenReturn(Arrays.asList(testOrganizer));
+        when(companyRepository.findAllById(any())).thenReturn(Arrays.asList(testCompany));
+        when(requestMapper.toDTO(testRequest, testOrganizer, testCompany)).thenReturn(requestDTO);
 
-        Page<RequestDTO> result = requestService.getRequestsByOrganizer(1L, "PENDING", pageable);
+        Page<RequestDTO> result = requestService.getRequestsByOrganizer("1", "PENDING", pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(requestRepository, times(1)).findByOrganizerIdAndStatusOrderByCreatedAtDesc(1L, RequestStatus.PENDING, pageable);
+        verify(requestRepository, times(1)).findByOrganizerIdAndStatusOrderByCreatedAtDesc("1", RequestStatus.PENDING, pageable);
     }
 
     @Test
@@ -232,10 +220,12 @@ class RequestServiceTest {
         List<SponsorshipRequest> requests = Arrays.asList(testRequest);
         Page<SponsorshipRequest> page = new PageImpl<>(requests, pageable, 1);
 
-        when(requestRepository.findByCompanyIdOrderByCreatedAtDesc(1L, pageable)).thenReturn(page);
-        when(requestMapper.toDTO(testRequest)).thenReturn(requestDTO);
+        when(requestRepository.findByCompanyIdOrderByCreatedAtDesc("1", pageable)).thenReturn(page);
+        when(organizerRepository.findAllById(any())).thenReturn(Arrays.asList(testOrganizer));
+        when(companyRepository.findAllById(any())).thenReturn(Arrays.asList(testCompany));
+        when(requestMapper.toDTO(testRequest, testOrganizer, testCompany)).thenReturn(requestDTO);
 
-        Page<RequestDTO> result = requestService.getRequestsByCompany(1L, null, pageable);
+        Page<RequestDTO> result = requestService.getRequestsByCompany("1", null, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
@@ -243,12 +233,14 @@ class RequestServiceTest {
 
     @Test
     void testUpdateRequestStatusSuccess() {
-        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+        when(requestRepository.findById("1")).thenReturn(Optional.of(testRequest));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(testCompany));
         when(requestRepository.save(any(SponsorshipRequest.class))).thenReturn(testRequest);
+        when(organizerRepository.findById("1")).thenReturn(Optional.of(testOrganizer));
         requestDTO.setStatus("ACCEPTED");
-        when(requestMapper.toDTO(testRequest)).thenReturn(requestDTO);
+        when(requestMapper.toDTO(testRequest, testOrganizer, testCompany)).thenReturn(requestDTO);
 
-        RequestDTO result = requestService.updateRequestStatus(1L, 2L, "ACCEPTED");
+        RequestDTO result = requestService.updateRequestStatus("1", "2", "ACCEPTED");
 
         assertNotNull(result);
         verify(requestRepository, times(1)).save(any(SponsorshipRequest.class));
@@ -256,22 +248,25 @@ class RequestServiceTest {
 
     @Test
     void testUpdateRequestStatusUnauthorized() {
-        User differentUser = User.builder().id(999L).build();
-        testCompany.setUser(differentUser);
-        testRequest.setCompany(testCompany);
+        Company differentCompany = Company.builder()
+                .id("1")
+                .userId("999")
+                .companyName("Tech Corp")
+                .build();
 
-        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+        when(requestRepository.findById("1")).thenReturn(Optional.of(testRequest));
+        when(companyRepository.findById("1")).thenReturn(Optional.of(differentCompany));
 
-        assertThrows(RuntimeException.class, () -> requestService.updateRequestStatus(1L, 2L, "ACCEPTED"));
+        assertThrows(RuntimeException.class, () -> requestService.updateRequestStatus("1", "2", "ACCEPTED"));
     }
 
     @Test
     void testIsDuplicateRequest() {
-        when(requestRepository.existsDuplicateRequest(anyLong(), anyLong(), any())).thenReturn(true);
+        when(requestRepository.countDuplicateRequests(anyString(), anyString(), any())).thenReturn(1L);
 
-        boolean result = requestService.isDuplicateRequest(1L, 1L);
+        boolean result = requestService.isDuplicateRequest("1", "1");
 
         assertTrue(result);
-        verify(requestRepository, times(1)).existsDuplicateRequest(anyLong(), anyLong(), any());
+        verify(requestRepository, times(1)).countDuplicateRequests(anyString(), anyString(), any());
     }
 }
