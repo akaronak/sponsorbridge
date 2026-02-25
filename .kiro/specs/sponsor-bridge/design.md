@@ -1,8 +1,8 @@
-# Design Document: SponsorBridge
+# Design Document: Eventra
 
 ## Overview
 
-SponsorBridge is a three-tier web application following a RESTful architecture pattern. The system consists of a React frontend, Spring Boot backend API, and PostgreSQL database. The platform implements role-based access control (RBAC) with JWT authentication, enabling three distinct user experiences: Organizers who search for sponsors, Companies who manage sponsorship offerings, and Admins who moderate content.
+Eventra is a three-tier web application following a RESTful architecture pattern. The system consists of a React frontend, Spring Boot backend API, and PostgreSQL database. The platform implements role-based access control (RBAC) with JWT authentication, enabling three distinct user experiences: Organizers who search for sponsors, Companies who manage sponsorship offerings, and Admins who moderate content.
 
 The architecture prioritizes security, scalability, and maintainability through clear separation of concerns, stateless authentication, and database indexing strategies.
 
@@ -1045,7 +1045,7 @@ public class GlobalExceptionHandler {
 
 ### Dual Testing Approach
 
-SponsorBridge employs both unit testing and property-based testing to ensure comprehensive correctness coverage:
+Eventra employs both unit testing and property-based testing to ensure comprehensive correctness coverage:
 
 **Unit Tests**: Verify specific examples, edge cases, and error conditions
 - Specific user registration scenarios

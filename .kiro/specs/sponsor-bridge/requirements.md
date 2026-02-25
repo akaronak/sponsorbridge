@@ -1,12 +1,12 @@
-# Requirements Document: SponsorBridge
+# Requirements Document: Eventra
 
 ## Introduction
 
-SponsorBridge is a centralized marketplace platform that connects event organizers with potential sponsors. The platform addresses the inefficiencies in current sponsorship discovery and outreach processes by providing structured search, filtering, request management, and communication tracking capabilities. The system serves three primary user roles: Organizers (who seek sponsorships), Companies (who provide sponsorships), and Admins (who moderate the platform).
+Eventra is a centralized marketplace platform that connects event organizers with potential sponsors. The platform addresses the inefficiencies in current sponsorship discovery and outreach processes by providing structured search, filtering, request management, and communication tracking capabilities. The system serves three primary user roles: Organizers (who seek sponsorships), Companies (who provide sponsorships), and Admins (who moderate the platform).
 
 ## Glossary
 
-- **System**: The SponsorBridge platform
+- **System**: The Eventra platform
 - **Organizer**: A user who seeks sponsorship for events (college fest teams, hackathon organizers, communities, etc.)
 - **Company**: A user representing a business entity that provides sponsorships
 - **Admin**: A privileged user who moderates platform content and approves profiles

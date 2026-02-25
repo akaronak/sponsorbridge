@@ -7,7 +7,7 @@ const Header: React.FC = () => {
                 <div className="flex justify-between h-16">
                     <div className="flex">
                         <div className="flex-shrink-0">
-                            <h1 className="text-2xl font-bold">SponsorBridge</h1>
+                            <h1 className="text-2xl font-bold">Eventra</h1>
                         </div>
                         <nav className="hidden md:flex space-x-10 ml-10">
                             <a href="#features" className="text-gray-500 hover:text-gray-900">Features</a>

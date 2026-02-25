@@ -1,0 +1,192 @@
+# ═══════════════════════════════════════════════════════
+# Prometheus Alert Rules — Eventra Platform
+# ═══════════════════════════════════════════════════════
+# Severity levels:
+#   critical — Page on-call immediately (system down / money at risk)
+#   warning  — Investigate within 15 minutes
+#   info     — Track in dashboard, no immediate action
+
+groups:
+
+  # ═══════════════════════════════════════════════════
+  # SYSTEM HEALTH
+  # ═══════════════════════════════════════════════════
+  - name: system_health
+    rules:
+      - alert: HighCpuUsage
+        expr: system_cpu_usage{application="eventra"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 85% for 5 minutes"
+          description: "Backend CPU at {{ $value | humanizePercentage }}."
+
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap",application="eventra"} / jvm_memory_max_bytes{area="heap",application="eventra"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM heap usage above 85%"
+          description: "Heap at {{ $value | humanizePercentage }}. Risk of OOM."
+
+      - alert: High5xxRate
+        expr: sum(rate(http_server_requests_seconds_count{application="eventra",status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count{application="eventra"}[5m])) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "5xx error rate above 5% for 3 minutes"
+          description: "Server error rate at {{ $value | humanizePercentage }}."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="eventra"}[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP p95 latency above 2 seconds"
+          description: "p95 latency at {{ $value }}s."
+
+      - alert: BackendDown
+        expr: up{job="eventra-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Eventra backend is unreachable"
+          description: "Prometheus cannot scrape the backend. Service may be down."
+
+  # ═══════════════════════════════════════════════════
+  # PAYMENTS & ESCROW (financial — always critical)
+  # ═══════════════════════════════════════════════════
+  - name: payments
+    rules:
+      - alert: PaymentFailureSpike
+        expr: rate(eventra_payment_failed_total{application="eventra"}[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment failure rate spiking"
+          description: "More than 0.5 payment failures/sec for 2 minutes. Check Razorpay connectivity."
+
+      - alert: WebhookFailures
+        expr: rate(eventra_webhook_failed_total{application="eventra"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Webhook processing failures detected"
+          description: "Payment webhooks are failing. Money may be at risk."
+
+      - alert: EscrowAutoReleaseJobStale
+        expr: time() - eventra_escrow_autorelease_duration_seconds_max > 7200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Escrow auto-release job has not run in 2+ hours"
+          description: "The scheduled escrow release job may be stuck or crashed."
+
+      - alert: HighWebhookDuplicateRate
+        expr: rate(eventra_webhook_duplicate_total{application="eventra"}[5m]) / rate(eventra_webhook_received_total{application="eventra"}[5m]) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Over 30% webhook duplicates — possible replay attack"
+          description: "Webhook duplicate rate at {{ $value | humanizePercentage }}."
+
+  # ═══════════════════════════════════════════════════
+  # MESSAGING / WEBSOCKET
+  # ═══════════════════════════════════════════════════
+  - name: messaging
+    rules:
+      - alert: WebSocketSessionDrop
+        expr: delta(eventra_ws_sessions_active{application="eventra"}[5m]) < -50
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "50+ WebSocket sessions dropped in 5 minutes"
+          description: "Sudden session drop — possible broker or network issue."
+
+      - alert: WebSocketConnectionErrors
+        expr: rate(eventra_ws_connection_errors_total{application="eventra"}[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated WebSocket connection errors"
+          description: "Connection error rate at {{ $value }}/s."
+
+      - alert: StompBrokerUnreachable
+        expr: eventra_health_rabbitMQStomp == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RabbitMQ STOMP broker is unreachable"
+          description: "The STOMP broker relay cannot connect to RabbitMQ. All real-time messaging is down."
+
+  # ═══════════════════════════════════════════════════
+  # SECURITY
+  # ═══════════════════════════════════════════════════
+  - name: security
+    rules:
+      - alert: BruteForceLoginAttempts
+        expr: rate(eventra_auth_login_failed_total{application="eventra"}[5m]) > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Possible brute-force login attack"
+          description: "Failed login rate at {{ $value }}/s for 3 minutes."
+
+      - alert: ExcessiveRateLimitBlocks
+        expr: rate(eventra_ratelimit_blocked_total{application="eventra"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Excessive rate limiting — possible DDoS or misconfigured client"
+          description: "Rate limit blocks at {{ $value }}/s."
+
+      - alert: JwtValidationFailureSpike
+        expr: rate(eventra_auth_jwt_validation_failed_total{application="eventra"}[5m]) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JWT validation failures spiking"
+          description: "Possible token tampering or expired tokens not being refreshed."
+
+  # ═══════════════════════════════════════════════════
+  # INFRASTRUCTURE (Redis / MongoDB)
+  # ═══════════════════════════════════════════════════
+  - name: infrastructure
+    rules:
+      - alert: RedisDown
+        expr: up{job="eventra-backend"} == 1 and spring_data_redis_connections_active == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis connection pool exhausted or down"
+          description: "No active Redis connections — rate limiting and caching are offline."
+
+      - alert: LowRedisCacheHitRate
+        expr: >
+          rate(spring_data_redis_cache_gets_total{result="hit",application="eventra"}[15m])
+          /
+          (rate(spring_data_redis_cache_gets_total{result="hit",application="eventra"}[15m])
+          + rate(spring_data_redis_cache_gets_total{result="miss",application="eventra"}[15m]))
+          < 0.5
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "Redis cache hit rate below 50%"
+          description: "Cache hit ratio at {{ $value | humanizePercentage }}. Check TTL config."

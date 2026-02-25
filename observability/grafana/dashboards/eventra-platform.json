@@ -1,0 +1,336 @@
+{
+  "annotations": { "list": [] },
+  "description": "Eventra Platform — Production Observability Dashboard",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "🏥 System Health",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "CPU Usage",
+      "type": "gauge",
+      "targets": [{
+        "expr": "system_cpu_usage{application=\"eventra\"} * 100",
+        "legendFormat": "CPU %"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "JVM Heap Usage",
+      "type": "gauge",
+      "targets": [{
+        "expr": "jvm_memory_used_bytes{area=\"heap\",application=\"eventra\"} / jvm_memory_max_bytes{area=\"heap\",application=\"eventra\"} * 100",
+        "legendFormat": "Heap %"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "title": "JVM Memory (Heap vs Non-Heap)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "jvm_memory_used_bytes{area=\"heap\",application=\"eventra\"}", "legendFormat": "Heap Used" },
+        { "expr": "jvm_memory_used_bytes{area=\"nonheap\",application=\"eventra\"}", "legendFormat": "Non-Heap Used" },
+        { "expr": "jvm_memory_max_bytes{area=\"heap\",application=\"eventra\"}", "legendFormat": "Heap Max" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "title": "JVM Threads",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "jvm_threads_live_threads{application=\"eventra\"}", "legendFormat": "Live" },
+        { "expr": "jvm_threads_daemon_threads{application=\"eventra\"}", "legendFormat": "Daemon" },
+        { "expr": "jvm_threads_peak_threads{application=\"eventra\"}", "legendFormat": "Peak" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 7 },
+      "id": 5,
+      "title": "HTTP Request Latency (p50 / p95 / p99)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{application=\"eventra\"}[5m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"eventra\"}[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"eventra\"}[5m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 7 },
+      "id": 6,
+      "title": "HTTP Request Rate by Status",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"eventra\",status=~\"2..\"}[5m]))", "legendFormat": "2xx" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"eventra\",status=~\"4..\"}[5m]))", "legendFormat": "4xx" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"eventra\",status=~\"5..\"}[5m]))", "legendFormat": "5xx" }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 200,
+      "title": "💬 Messaging & WebSocket",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 14 },
+      "id": 7,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "title": "Active WebSocket Sessions",
+      "type": "stat",
+      "targets": [{
+        "expr": "eventra_ws_sessions_active{application=\"eventra\"}",
+        "legendFormat": "Sessions"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "msg/s" } },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 14 },
+      "id": 8,
+      "title": "STOMP Messages / sec",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(eventra_ws_messages_sent_total{application=\"eventra\"}[5m])", "legendFormat": "Sent" },
+        { "expr": "rate(eventra_ws_messages_received_total{application=\"eventra\"}[5m])", "legendFormat": "Received" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 14 },
+      "id": 9,
+      "title": "Active Conversations",
+      "type": "stat",
+      "targets": [{
+        "expr": "eventra_ws_conversations_active{application=\"eventra\"}",
+        "legendFormat": "Conversations"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 14 },
+      "id": 10,
+      "title": "WS Connection Errors",
+      "type": "timeseries",
+      "targets": [{
+        "expr": "rate(eventra_ws_connection_errors_total{application=\"eventra\"}[5m])",
+        "legendFormat": "Errors/s"
+      }]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
+      "id": 300,
+      "title": "💳 Payments & Escrow",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 21 },
+      "id": 11,
+      "title": "Payment Lifecycle",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(eventra_payment_created_total{application=\"eventra\"}[5m])", "legendFormat": "Created" },
+        { "expr": "rate(eventra_payment_verified_total{application=\"eventra\"}[5m])", "legendFormat": "Verified" },
+        { "expr": "rate(eventra_payment_failed_total{application=\"eventra\"}[5m])", "legendFormat": "Failed" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 21 },
+      "id": 12,
+      "title": "Escrow Transitions",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(eventra_escrow_held_total{application=\"eventra\"}[5m])", "legendFormat": "Held" },
+        { "expr": "rate(eventra_escrow_released_total{application=\"eventra\"}[5m])", "legendFormat": "Released" },
+        { "expr": "rate(eventra_escrow_refunded_total{application=\"eventra\"}[5m])", "legendFormat": "Refunded" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 21 },
+      "id": 13,
+      "title": "Webhooks",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(eventra_webhook_received_total{application=\"eventra\"}[5m])", "legendFormat": "Received" },
+        { "expr": "rate(eventra_webhook_failed_total{application=\"eventra\"}[5m])", "legendFormat": "Failed" },
+        { "expr": "rate(eventra_webhook_duplicate_total{application=\"eventra\"}[5m])", "legendFormat": "Duplicate" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 27 },
+      "id": 14,
+      "title": "Payment Verification Latency (p95)",
+      "type": "timeseries",
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum(rate(eventra_payment_verification_duration_seconds_bucket{application=\"eventra\"}[5m])) by (le))",
+        "legendFormat": "p95"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 27 },
+      "id": 15,
+      "title": "Escrow Auto-Release Job Duration",
+      "type": "timeseries",
+      "targets": [{
+        "expr": "eventra_escrow_autorelease_duration_seconds_sum{application=\"eventra\"} / eventra_escrow_autorelease_duration_seconds_count{application=\"eventra\"}",
+        "legendFormat": "Avg Duration"
+      }]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
+      "id": 400,
+      "title": "🔒 Security",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 34 },
+      "id": 16,
+      "title": "Auth Events",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(eventra_auth_login_success_total{application=\"eventra\"}[5m])", "legendFormat": "Login Success" },
+        { "expr": "rate(eventra_auth_login_failed_total{application=\"eventra\"}[5m])", "legendFormat": "Login Failed" },
+        { "expr": "rate(eventra_auth_registration_total{application=\"eventra\"}[5m])", "legendFormat": "Registration" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 34 },
+      "id": 17,
+      "title": "JWT Validation Failures",
+      "type": "timeseries",
+      "targets": [{
+        "expr": "rate(eventra_auth_jwt_validation_failed_total{application=\"eventra\"}[5m])",
+        "legendFormat": "JWT Failures/s"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 34 },
+      "id": 18,
+      "title": "Rate Limit Blocks",
+      "type": "timeseries",
+      "targets": [{
+        "expr": "rate(eventra_ratelimit_blocked_total{application=\"eventra\"}[5m])",
+        "legendFormat": "Blocked/s"
+      }]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
+      "id": 500,
+      "title": "🗄️ Infrastructure (Redis / MongoDB)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 41 },
+      "id": 19,
+      "title": "Redis Cache Hit/Miss Rate",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "rate(spring_data_redis_cache_gets_total{result=\"hit\",application=\"eventra\"}[5m])", "legendFormat": "Hits/s" },
+        { "expr": "rate(spring_data_redis_cache_gets_total{result=\"miss\",application=\"eventra\"}[5m])", "legendFormat": "Misses/s" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 41 },
+      "id": 20,
+      "title": "MongoDB Query Latency (p95)",
+      "type": "timeseries",
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum(rate(spring_data_repository_invocations_seconds_bucket{application=\"eventra\"}[5m])) by (le))",
+        "legendFormat": "p95"
+      }]
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["eventra", "production", "saas"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Eventra Platform — Production",
+  "uid": "eventra-production",
+  "version": 1
+}

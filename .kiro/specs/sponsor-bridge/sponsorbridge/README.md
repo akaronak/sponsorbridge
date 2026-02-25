@@ -1,11 +1,11 @@
-# SponsorBridge Landing Page
+# Eventra Landing Page
 
-Welcome to the SponsorBridge project! This repository contains the code for a premium SaaS landing page designed to showcase the features and pricing of the SponsorBridge service.
+Welcome to the Eventra project! This repository contains the code for a premium SaaS landing page designed to showcase the features and pricing of the Eventra service.
 
 ## Project Structure
 
 ```
-sponsorbridge
+eventra
 ├── src
 │   ├── app
 │   │   ├── layout.tsx        # Main layout component
@@ -33,12 +33,12 @@ sponsorbridge
 
 ## Getting Started
 
-To get started with the SponsorBridge project, follow these steps:
+To get started with the Eventra project, follow these steps:
 
 1. **Clone the repository:**
    ```
-   git clone https://github.com/yourusername/sponsorbridge.git
-   cd sponsorbridge
+   git clone https://github.com/yourusername/eventra.git
+   cd eventra
    ```
 
 2. **Install dependencies:**
@@ -57,7 +57,7 @@ To get started with the SponsorBridge project, follow these steps:
 ## Features
 
 - Responsive design for optimal viewing on all devices.
-- Highlighted features of the SponsorBridge service.
+- Highlighted features of the Eventra service.
 - Clear pricing plans to cater to different user needs.
 - Engaging call-to-action to encourage sign-ups.
 

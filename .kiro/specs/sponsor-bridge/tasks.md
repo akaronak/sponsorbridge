@@ -1,8 +1,8 @@
-# Implementation Plan: SponsorBridge
+# Implementation Plan: Eventra
 
 ## Overview
 
-This implementation plan breaks down the SponsorBridge platform into incremental, testable steps. The approach follows a bottom-up strategy: starting with database and core entities, then building authentication and security, followed by business logic services, API endpoints, and finally the frontend. Each major component includes property-based tests to validate correctness properties from the design document.
+This implementation plan breaks down the Eventra platform into incremental, testable steps. The approach follows a bottom-up strategy: starting with database and core entities, then building authentication and security, followed by business logic services, API endpoints, and finally the frontend. Each major component includes property-based tests to validate correctness properties from the design document.
 
 The implementation uses Java with Spring Boot for the backend and React with TypeScript for the frontend. Property-based testing uses jqwik for Java backend tests.
 
