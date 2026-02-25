@@ -1,0 +1,39 @@
+# Maven build output (never needed in build context)
+target/
+
+# Logs (local/dev only, not needed in image)
+*.log
+logs/
+log/
+
+# IDE/editor files (never needed in image)
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Test artifacts (not needed for production build)
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Git metadata (never needed in image)
+.git/
+.gitignore
+.gitattributes
+
+# Environment/config files (should be set via env vars in prod)
+.env
+.env.*
+*.env
+
+# OS/Editor junk
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.swp
+*.swo
+*~
