@@ -85,13 +85,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   // Handle sending a message (optimistic UI)
   const handleSend = async (payload: SendMessagePayload) => {
-    // Optimistic message
+    // Optimistic message — derive senderRole from conversation participant data
+    const senderRole = conversation.participantRole === 'ORGANIZER' ? 'COMPANY' : 'ORGANIZER';
     const optimistic: Message = {
       id: `temp-${Date.now()}`,
       conversationId: conversation.id,
       senderId: currentUserId,
       senderName: 'You',
-      senderRole: 'ORGANIZER',
+      senderRole,
       messageType: payload.messageType || 'TEXT',
       content: payload.content,
       status: 'SENT',
@@ -137,6 +138,50 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     });
   }, [incomingMessages]);
 
+  // ── Proposal action handlers ──
+  const handleAcceptProposal = useCallback(
+    async (messageId: string | number) => {
+      try {
+        const payload: SendMessagePayload = {
+          content: 'Deal accepted! Looking forward to our partnership.',
+          messageType: 'DEAL_ACCEPTED',
+          parentMessageId: messageId,
+        };
+        await handleSend(payload);
+      } catch (err) {
+        console.error('Failed to accept proposal:', err);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [conversation.id]
+  );
+
+  const handleRejectProposal = useCallback(
+    async (messageId: string | number) => {
+      try {
+        const payload: SendMessagePayload = {
+          content: 'We have decided not to proceed with this proposal.',
+          messageType: 'DEAL_REJECTED',
+          parentMessageId: messageId,
+        };
+        await handleSend(payload);
+      } catch (err) {
+        console.error('Failed to reject proposal:', err);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [conversation.id]
+  );
+
+  const handleCounterProposal = useCallback(
+    (_messageId: string | number) => {
+      // TODO: Open a counter-proposal modal/form
+      // For now, this is a placeholder — the UI should present a form
+      console.log('Counter proposal requested for message:', _messageId);
+    },
+    []
+  );
+
   // Date separator helper
   const getDateLabel = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -175,6 +220,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           message={msg}
           isOwn={String(msg.senderId) === String(currentUserId)}
           accentColor={accentColor}
+          onAcceptProposal={handleAcceptProposal}
+          onRejectProposal={handleRejectProposal}
+          onCounterProposal={handleCounterProposal}
         />
       );
     });

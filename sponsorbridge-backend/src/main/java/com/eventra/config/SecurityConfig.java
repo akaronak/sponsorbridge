@@ -92,8 +92,7 @@ public class SecurityConfig {
                         // AI endpoints - require authentication
                         .requestMatchers("/api/ai/**").authenticated()
 
-                        // Message endpoints - require authentication
-                        .requestMatchers("/api/messages/**").authenticated()
+                        // Conversation & request endpoints - require authentication
                         .requestMatchers("/api/requests/{id}").authenticated()
 
                         // All other requests require authentication

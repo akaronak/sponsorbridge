@@ -22,7 +22,7 @@ const initialState: AuthState = {
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'AUTH_LOADING':
-      return { ...state, isLoading: true };
+      return { user: null, token: null, isAuthenticated: false, isLoading: true };
     case 'AUTH_SUCCESS':
       return {
         user: action.payload.user,
@@ -89,6 +89,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<User> => {
+    // Clear previous session completely before starting new login
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     dispatch({ type: 'AUTH_LOADING' });
     try {
       const response = await authApi.login(credentials);
@@ -96,6 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       dispatch({ type: 'AUTH_SUCCESS', payload: { user, token } });
+      // Notify other layers (e.g. WebSocket) that the user identity changed
+      window.dispatchEvent(new CustomEvent('auth:changed'));
       return user;
     } catch (error) {
       dispatch({ type: 'AUTH_ERROR' });
@@ -122,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     dispatch({ type: 'AUTH_LOGOUT' });
+    window.dispatchEvent(new CustomEvent('auth:changed'));
     authApi.logout(); // fire-and-forget server logout
   }, []);
 

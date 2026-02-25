@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -31,6 +32,7 @@ const Sidebar: React.FC = () => {
     { label: 'Events', path: '/dashboard/events', icon: <Calendar className="w-5 h-5" /> },
     { label: 'Sponsors', path: '/dashboard/sponsors', icon: <Building2 className="w-5 h-5" /> },
     { label: 'Messages', path: '/dashboard/messages', icon: <MessageSquare className="w-5 h-5" /> },
+    { label: 'Payments', path: '/dashboard/payments', icon: <CreditCard className="w-5 h-5" /> },
     { label: 'Analytics', path: '/dashboard/analytics', icon: <BarChart3 className="w-5 h-5" /> },
     { label: 'AI Assistant', path: '/dashboard/ai', icon: <Bot className="w-5 h-5" /> },
   ];

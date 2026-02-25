@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Mail,
@@ -25,6 +25,15 @@ const Settings: React.FC = () => {
     organization: '',
     website: '',
   });
+
+  // Sync form when the authenticated user changes (e.g. account switch)
+  useEffect(() => {
+    setProfileForm((prev) => ({
+      ...prev,
+      name: user?.name || '',
+      email: user?.email || '',
+    }));
+  }, [user?.id, user?.name, user?.email]);
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },

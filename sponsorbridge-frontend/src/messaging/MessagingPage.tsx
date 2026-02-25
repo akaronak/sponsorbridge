@@ -92,12 +92,24 @@ const MessagingPage: React.FC<MessagingPageProps> = ({ accentColor = 'indigo' })
     [currentUserId, selectedConvo]
   );
 
-  const { isConnected, sendTyping, sendMarkRead } = useWebSocket(handleWsMessage);
+  const { isConnected, sendTyping, sendMarkRead, subscribeToConversation } = useWebSocket(handleWsMessage);
 
-  // ── Load conversations ──
+  // ── Subscribe to selected conversation's STOMP topics ──
+  useEffect(() => {
+    if (selectedConvo && isConnected) {
+      subscribeToConversation(selectedConvo.id);
+    }
+  }, [selectedConvo?.id, isConnected, subscribeToConversation]);
+
+  // ── Load conversations (re-fetch when the authenticated user changes) ──
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    // Reset stale state from previous user
+    setConversations([]);
+    setSelectedConvo(null);
+    setRealtimeQueue([]);
+    setTypingUsers(new Map());
 
     messagesApi
       .getConversations()
@@ -105,7 +117,7 @@ const MessagingPage: React.FC<MessagingPageProps> = ({ accentColor = 'indigo' })
         if (!cancelled) {
           setConversations(data);
           // Auto-select first conversation
-          if (data.length > 0 && !selectedConvo) {
+          if (data.length > 0) {
             setSelectedConvo(data[0]);
           }
         }
@@ -118,8 +130,7 @@ const MessagingPage: React.FC<MessagingPageProps> = ({ accentColor = 'indigo' })
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentUserId]);
 
   // ── Select conversation ──
   const handleSelectConvo = (convo: Conversation) => {

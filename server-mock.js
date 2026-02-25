@@ -594,9 +594,6 @@ let nextConvId = 1;
 let nextMsgId = 1;
 let nextNotifId = 1;
 
-// Track WebSocket connections per user
-const wsConnections = new Map(); // userId → Set<ws>
-
 // ── Seed Demo Conversations ──
 
 function seedMessagingData() {
@@ -977,8 +974,13 @@ app.post('/api/conversations/:id/messages', authenticateToken, (req, res) => {
     conv.unreadCompany = (conv.unreadCompany || 0) + 1;
   }
 
-  // Broadcast via WebSocket to all connected clients for this conversation
-  broadcastToConversation(convId, { type: 'NEW_MESSAGE', data: msg });
+  // Broadcast via STOMP to conversation topic subscribers
+  broadcastToConversation(convId, msg);
+
+  // Send to recipient's personal queue
+  const recipientId = String(conv.companyId) === String(user.id)
+    ? String(conv.organizerId) : String(conv.companyId);
+  sendToUserQueue(recipientId, '/queue/messages', msg);
 
   res.status(201).json(msg);
 });
@@ -1007,10 +1009,9 @@ app.post('/api/conversations/:id/read', authenticateToken, (req, res) => {
     }
   });
 
-  // Broadcast read receipt
-  broadcastToConversation(convId, {
-    type: 'READ_RECEIPT',
-    data: { conversationId: convId, userId: user.id, readAt: new Date().toISOString() }
+  // Broadcast read receipt via STOMP topic
+  broadcastToTopic(`/topic/conversation/${convId}/read`, {
+    conversationId: convId, userId: user.id, readAt: new Date().toISOString()
   });
 
   res.status(204).send();
@@ -1085,65 +1086,246 @@ function getUserFromToken(req) {
   }
 }
 
-// ── WebSocket Server (alongside Express) ──
+// ── WebSocket Server — STOMP-compatible (alongside Express) ──
 
 const wss = new WebSocketServer({ server, path: '/ws' });
 
+// ── Minimal STOMP frame parser/serializer ──
+function parseStompFrame(data) {
+  const str = typeof data === 'string' ? data : data.toString();
+  // STOMP frame: COMMAND\nheader:value\n...\n\nbody\0
+  const nullIdx = str.indexOf('\0');
+  const frame = nullIdx >= 0 ? str.substring(0, nullIdx) : str;
+  const lines = frame.split('\n');
+  const command = lines[0];
+  const headers = {};
+  let i = 1;
+  for (; i < lines.length; i++) {
+    if (lines[i] === '') break; // empty line separates headers from body
+    const colonIdx = lines[i].indexOf(':');
+    if (colonIdx > 0) {
+      headers[lines[i].substring(0, colonIdx)] = lines[i].substring(colonIdx + 1);
+    }
+  }
+  const body = lines.slice(i + 1).join('\n');
+  return { command, headers, body };
+}
+
+function buildStompFrame(command, headers, body) {
+  let frame = command + '\n';
+  for (const [k, v] of Object.entries(headers)) {
+    frame += `${k}:${v}\n`;
+  }
+  frame += '\n';
+  if (body) frame += body;
+  frame += '\0';
+  return frame;
+}
+
+// Map: userId → Set<{ ws, subscriptions: Map<subId, destination> }>
+const stompClients = new Map();
+
+function getClientsForUser(uid) {
+  return stompClients.get(String(uid)) || new Set();
+}
+
 wss.on('connection', (ws, req) => {
   let userId = null;
+  const subscriptions = new Map(); // id → destination
+  const clientInfo = { ws, subscriptions };
 
-  // Parse token from URL query
+  // For SockJS compatibility: the client may also send raw JSON (non-STOMP)
+  // or the initial connection may include a token in the URL
   const url = new URL(req.url, 'http://localhost');
-  const token = url.searchParams.get('token');
+  const urlToken = url.searchParams.get('token');
 
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      userId = decoded.id?.toString() || decoded.email;
+  ws.on('message', (raw) => {
+    const str = typeof raw === 'string' ? raw : raw.toString();
 
-      // Register connection
-      if (!wsConnections.has(userId)) {
-        wsConnections.set(userId, new Set());
-      }
-      wsConnections.get(userId).add(ws);
+    // ── Detect STOMP vs legacy JSON ──
+    if (str.startsWith('CONNECT') || str.startsWith('SUBSCRIBE') || str.startsWith('SEND') ||
+        str.startsWith('DISCONNECT') || str.startsWith('UNSUBSCRIBE') || str.startsWith('\n') ||
+        str.startsWith('STOMP')) {
+      handleStompFrame(str);
+    } else {
+      // Legacy JSON fallback (for backward compatibility during migration)
+      handleLegacyJson(str);
+    }
+  });
 
-      ws.send(JSON.stringify({ type: 'CONNECTED', data: { userId } }));
-      console.log(`WebSocket connected: user ${userId}`);
-    } catch (err) {
-      ws.send(JSON.stringify({ type: 'AUTH_ERROR', data: { message: 'Invalid token' } }));
-      ws.close();
+  function handleStompFrame(raw) {
+    // Handle heart-beat (empty line)
+    if (raw.trim() === '' || raw === '\n') {
+      ws.send('\n'); // STOMP heart-beat response
       return;
+    }
+
+    const frame = parseStompFrame(raw);
+
+    switch (frame.command) {
+      case 'CONNECT':
+      case 'STOMP': {
+        // Extract JWT from Authorization header or token header
+        let token = null;
+        if (frame.headers['Authorization']) {
+          const auth = frame.headers['Authorization'];
+          token = auth.startsWith('Bearer ') ? auth.substring(7) : auth;
+        } else if (frame.headers['token']) {
+          token = frame.headers['token'];
+        } else if (urlToken) {
+          token = urlToken;
+        }
+
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            userId = decoded.id?.toString() || decoded.email;
+
+            if (!stompClients.has(userId)) {
+              stompClients.set(userId, new Set());
+            }
+            stompClients.get(userId).add(clientInfo);
+
+            // Send CONNECTED frame
+            ws.send(buildStompFrame('CONNECTED', {
+              version: '1.2',
+              'heart-beat': '10000,10000',
+              server: 'eventra-mock/1.0',
+              'user-name': userId,
+            }, ''));
+
+            console.log(`[STOMP] Connected: user ${userId}`);
+          } catch (err) {
+            ws.send(buildStompFrame('ERROR', {
+              message: 'Authentication failed',
+            }, 'Invalid or expired JWT token'));
+            ws.close();
+          }
+        } else {
+          ws.send(buildStompFrame('ERROR', {
+            message: 'No credentials provided',
+          }, 'Missing Authorization header'));
+          ws.close();
+        }
+        break;
+      }
+
+      case 'SUBSCRIBE': {
+        const subId = frame.headers['id'];
+        const destination = frame.headers['destination'];
+        if (subId && destination) {
+          subscriptions.set(subId, destination);
+          console.log(`[STOMP] User ${userId} subscribed: ${destination} (id: ${subId})`);
+        }
+        break;
+      }
+
+      case 'UNSUBSCRIBE': {
+        const subId = frame.headers['id'];
+        if (subId) {
+          subscriptions.delete(subId);
+        }
+        break;
+      }
+
+      case 'SEND': {
+        const destination = frame.headers['destination'];
+        let body = {};
+        try { body = JSON.parse(frame.body); } catch { body = { content: frame.body }; }
+
+        if (destination === '/app/chat.send') {
+          // Handle send message via STOMP
+          const convId = parseInt(body.conversationId);
+          const conv = conversations.get(convId);
+          if (!conv || !userId) break;
+
+          const user = findUserById(userId);
+          const msgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          const msg = {
+            id: msgId,
+            conversationId: convId,
+            senderId: userId,
+            senderName: user?.name || 'Unknown',
+            senderRole: user?.role || 'ORGANIZER',
+            messageType: body.messageType || 'TEXT',
+            content: body.content || '',
+            status: 'SENT',
+            proposalAmount: body.proposalAmount,
+            sponsorshipType: body.sponsorshipType,
+            proposalTerms: body.proposalTerms,
+            goodiesDescription: body.goodiesDescription,
+            proposalDeadline: body.proposalDeadline,
+            parentMessageId: body.parentMessageId,
+            createdAt: new Date().toISOString(),
+          };
+
+          if (!conversationMessages.has(convId)) {
+            conversationMessages.set(convId, []);
+          }
+          conversationMessages.get(convId).push(msg);
+
+          // Update conversation metadata
+          const preview = (msg.content || '').length > 100
+            ? msg.content.substring(0, 100) + '...' : msg.content;
+          conv.lastMessagePreview = preview;
+          conv.lastMessageAt = msg.createdAt;
+
+          // Broadcast to conversation topic subscribers
+          broadcastToConversation(convId, msg, userId);
+
+          // Send to recipient's personal queue
+          const recipientId = String(conv.companyId) === userId
+            ? String(conv.organizerId) : String(conv.companyId);
+          sendToUserQueue(recipientId, '/queue/messages', msg);
+
+        } else if (destination === '/app/chat.typing') {
+          // Handle typing indicator
+          const convId = body.conversationId;
+          const typing = body.typing;
+          broadcastToTopic(`/topic/conversation/${convId}/typing`, {
+            conversationId: convId,
+            userId,
+            typing,
+          }, userId);
+        }
+        break;
+      }
+
+      case 'DISCONNECT': {
+        console.log(`[STOMP] Disconnect requested: user ${userId}`);
+        ws.send(buildStompFrame('RECEIPT', {
+          'receipt-id': frame.headers['receipt'] || 'disconnect',
+        }, ''));
+        break;
+      }
     }
   }
 
-  ws.on('message', (raw) => {
+  // ── Legacy JSON handler (backward compat) ──
+  function handleLegacyJson(str) {
     try {
-      const message = JSON.parse(raw);
-
+      const message = JSON.parse(str);
       switch (message.type) {
         case 'TYPING': {
           const { conversationId, typing } = message.data;
-          broadcastToConversation(conversationId, {
-            type: 'TYPING',
-            data: { conversationId, userId, typing }
-          }, userId); // exclude sender
+          broadcastToTopic(`/topic/conversation/${conversationId}/typing`, {
+            conversationId, userId, typing
+          }, userId);
           break;
         }
         case 'MARK_READ': {
           const { conversationId } = message.data;
-          const conv = conversations.get(conversationId);
+          const conv = conversations.get(parseInt(conversationId));
           if (conv) {
-            // Reset unread (simplified: reset both since we don't know role from WS)
-            const msgs = conversationMessages.get(conversationId) || [];
+            const msgs = conversationMessages.get(parseInt(conversationId)) || [];
             msgs.forEach(m => {
               if (m.senderId !== userId && m.status !== 'READ') {
                 m.status = 'READ';
                 m.readAt = new Date().toISOString();
               }
             });
-            broadcastToConversation(conversationId, {
-              type: 'READ_RECEIPT',
-              data: { conversationId, userId, readAt: new Date().toISOString() }
+            broadcastToTopic(`/topic/conversation/${conversationId}/read`, {
+              conversationId, userId, readAt: new Date().toISOString()
             });
           }
           break;
@@ -1156,31 +1338,78 @@ wss.on('connection', (ws, req) => {
     } catch (err) {
       console.error('WebSocket message parse error:', err.message);
     }
-  });
+  }
 
   ws.on('close', () => {
-    if (userId && wsConnections.has(userId)) {
-      wsConnections.get(userId).delete(ws);
-      if (wsConnections.get(userId).size === 0) {
-        wsConnections.delete(userId);
+    if (userId && stompClients.has(userId)) {
+      stompClients.get(userId).delete(clientInfo);
+      if (stompClients.get(userId).size === 0) {
+        stompClients.delete(userId);
       }
-      console.log(`WebSocket disconnected: user ${userId}`);
+      console.log(`[STOMP] Disconnected: user ${userId}`);
     }
   });
 
   ws.on('error', (err) => {
-    console.error('WebSocket error:', err.message);
+    console.error('[STOMP] WebSocket error:', err.message);
   });
 });
 
-// Broadcast to all WebSocket clients (for a conversation)
+// Find user by id helper
+function findUserById(id) {
+  for (const [, user] of users) {
+    if (String(user.id) === String(id)) return user;
+  }
+  return null;
+}
+
+// ── STOMP-aware broadcast: send to all subscribers of a conversation topic ──
 function broadcastToConversation(conversationId, payload, excludeUserId) {
-  const msg = JSON.stringify(payload);
-  wss.clients.forEach(client => {
-    if (client.readyState === 1) { // WebSocket.OPEN
-      client.send(msg);
+  const topic = `/topic/conversation/${conversationId}`;
+  broadcastToTopic(topic, payload, excludeUserId);
+}
+
+// ── Generic topic broadcaster: only sends to clients subscribed to the exact destination ──
+function broadcastToTopic(destination, payload, excludeUserId) {
+  const body = JSON.stringify(payload);
+  for (const [uid, clientSet] of stompClients) {
+    if (excludeUserId && String(uid) === String(excludeUserId)) continue;
+    for (const client of clientSet) {
+      if (client.ws.readyState !== 1) continue; // WebSocket.OPEN
+      for (const [subId, subDest] of client.subscriptions) {
+        if (subDest === destination) {
+          client.ws.send(buildStompFrame('MESSAGE', {
+            subscription: subId,
+            destination,
+            'message-id': `msg-${Date.now()}-${Math.random().toString(36).substring(2,6)}`,
+            'content-type': 'application/json',
+          }, body));
+        }
+      }
     }
-  });
+  }
+}
+
+// ── Send to a specific user's queue (e.g., /queue/messages, /queue/notifications) ──
+function sendToUserQueue(userId, queue, payload) {
+  const clientSet = stompClients.get(String(userId));
+  if (!clientSet) return;
+  const body = JSON.stringify(payload);
+  const destination = `/user/${userId}${queue}`;
+  for (const client of clientSet) {
+    if (client.ws.readyState !== 1) continue;
+    for (const [subId, subDest] of client.subscriptions) {
+      // Match /user/queue/messages (Spring resolves /user prefix automatically)
+      if (subDest === `/user${queue}` || subDest === destination) {
+        client.ws.send(buildStompFrame('MESSAGE', {
+          subscription: subId,
+          destination: subDest,
+          'message-id': `msg-${Date.now()}-${Math.random().toString(36).substring(2,6)}`,
+          'content-type': 'application/json',
+        }, body));
+      }
+    }
+  }
 }
 
 // Start server with WebSocket support

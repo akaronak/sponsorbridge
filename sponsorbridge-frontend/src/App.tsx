@@ -28,6 +28,7 @@ const Messages = lazy(() => import('./dashboard/pages/Messages'));
 const Analytics = lazy(() => import('./dashboard/pages/Analytics'));
 const Settings = lazy(() => import('./dashboard/pages/Settings'));
 const AIAssistant = lazy(() => import('./dashboard/modules/ai/AIAssistant'));
+const Payments = lazy(() => import('./dashboard/pages/Payments'));
 
 // â"€â"€â"€ Company Dashboard (lazy â€" code-split) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const CompanyLayout = lazy(() => import('./company/layout/CompanyLayout'));
@@ -38,6 +39,7 @@ const CompanyDeals = lazy(() => import('./company/pages/CompanyDeals'));
 const CompanyMessages = lazy(() => import('./company/pages/CompanyMessages'));
 const CompanyAnalytics = lazy(() => import('./company/pages/CompanyAnalytics'));
 const CompanySettings = lazy(() => import('./company/pages/CompanySettings'));
+const CompanyPayments = lazy(() => import('./company/pages/CompanyPayments'));
 
 // â"€â"€â"€ Shared â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const NotFound = lazy(() => import('./shared/NotFound'));
@@ -75,6 +77,7 @@ function App() {
               <Route path="sponsors" element={<Sponsors />} />
               <Route path="messages" element={<Messages />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="payments" element={<Payments />} />
               <Route path="ai" element={<AIAssistant />} />
               <Route path="settings" element={<Settings />} />
             </Route>
@@ -92,6 +95,7 @@ function App() {
               <Route path="events" element={<CompanyEvents />} />
               <Route path="applications" element={<CompanyApplications />} />
               <Route path="deals" element={<CompanyDeals />} />
+              <Route path="payments" element={<CompanyPayments />} />
               <Route path="messages" element={<CompanyMessages />} />
               <Route path="analytics" element={<CompanyAnalytics />} />
               <Route path="settings" element={<CompanySettings />} />

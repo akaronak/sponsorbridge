@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -9,17 +9,19 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated, user } = useAuth();
+  const { login, logout, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    const from =
-      (location.state as { from?: { pathname: string } })?.from?.pathname ||
-      getDashboardPath(user?.role);
-    navigate(from, { replace: true });
-  }
+  // If user navigates to /login while already authenticated,
+  // log them out so they can sign in with a different account.
+  useEffect(() => {
+    if (isAuthenticated) {
+      logout();
+    }
+    // Only run on mount — intentionally not re-running when isAuthenticated flips
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

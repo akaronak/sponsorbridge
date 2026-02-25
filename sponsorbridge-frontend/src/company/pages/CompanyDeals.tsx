@@ -10,8 +10,10 @@ import {
   TrendingUp,
   BarChart3,
   Search,
+  CreditCard,
 } from 'lucide-react';
 import type { Deal, DealStatus } from '../../types';
+import { CheckoutModal } from '../../components/payment';
 
 // ——— Mock deals ————————————————————————————————————————
 const MOCK_DEALS: Deal[] = [
@@ -113,6 +115,7 @@ const DEAL_STATUS_CONFIG: Record<DealStatus, { label: string; color: string; bg:
 const CompanyDeals: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<DealStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [checkoutDeal, setCheckoutDeal] = useState<Deal | null>(null);
 
   const filtered = MOCK_DEALS.filter((d) => {
     if (statusFilter !== 'ALL' && d.status !== statusFilter) return false;
@@ -256,10 +259,19 @@ const CompanyDeals: React.FC = () => {
                   View Event
                 </button>
                 {deal.status === 'ACTIVE' && (
-                  <button className="ml-auto flex items-center gap-1.5 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-medium rounded-lg transition-all">
-                    <Award className="w-3.5 h-3.5" />
-                    Mark Complete
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setCheckoutDeal(deal)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-medium rounded-lg transition-all"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Pay Now
+                    </button>
+                    <button className="ml-auto flex items-center gap-1.5 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-medium rounded-lg transition-all">
+                      <Award className="w-3.5 h-3.5" />
+                      Mark Complete
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -273,6 +285,20 @@ const CompanyDeals: React.FC = () => {
           <p className="text-slate-400 text-lg">No deals found</p>
           <p className="text-slate-500 text-sm mt-1">Get started by sending proposals to events</p>
         </div>
+      )}
+
+      {/* Razorpay Checkout Modal */}
+      {checkoutDeal && (
+        <CheckoutModal
+          requestId={checkoutDeal.proposalId}
+          amount={checkoutDeal.agreedAmount}
+          description={`Sponsorship payment for ${checkoutDeal.eventTitle}`}
+          onSuccess={() => {
+            setCheckoutDeal(null);
+            // Optionally refresh deals list or show success toast
+          }}
+          onClose={() => setCheckoutDeal(null)}
+        />
       )}
     </div>
   );

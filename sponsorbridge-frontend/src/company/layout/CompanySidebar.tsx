@@ -12,6 +12,7 @@ import {
   Search,
   Award,
   MessageSquare,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -32,6 +33,7 @@ const CompanySidebar: React.FC = () => {
     { label: 'Discover Events', path: '/company/events', icon: <Search className="w-5 h-5" /> },
     { label: 'My Applications', path: '/company/applications', icon: <FileText className="w-5 h-5" /> },
     { label: 'Active Deals', path: '/company/deals', icon: <Award className="w-5 h-5" /> },
+    { label: 'Payments', path: '/company/payments', icon: <CreditCard className="w-5 h-5" /> },
     { label: 'Messages', path: '/company/messages', icon: <MessageSquare className="w-5 h-5" /> },
     { label: 'Analytics', path: '/company/analytics', icon: <BarChart3 className="w-5 h-5" /> },
   ];

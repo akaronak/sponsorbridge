@@ -27,7 +27,7 @@ const ConversationListPanel: React.FC<ConversationListPanelProps> = ({
       c.participantName.toLowerCase().includes(q) ||
       c.eventName.toLowerCase().includes(q) ||
       (c.subject?.toLowerCase().includes(q) ?? false) ||
-      c.lastMessagePreview.toLowerCase().includes(q)
+      (c.lastMessagePreview ?? '').toLowerCase().includes(q)
     );
   });
 
