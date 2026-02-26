@@ -73,68 +73,6 @@
         </encoder>
     </appender>
 
-    <!-- ═══════════════════════════════════════════════
-         JSON File Appender (rolling, production)
-         ═══════════════════════════════════════════════ -->
-    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/${APP_NAME}.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/${APP_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>5GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdcKeyName>requestId</includeMdcKeyName>
-            <includeMdcKeyName>traceId</includeMdcKeyName>
-            <includeMdcKeyName>spanId</includeMdcKeyName>
-            <includeMdcKeyName>userId</includeMdcKeyName>
-            <includeMdcKeyName>userRole</includeMdcKeyName>
-            <includeMdcKeyName>clientIp</includeMdcKeyName>
-            <includeMdcKeyName>wsSessionId</includeMdcKeyName>
-            <includeMdcKeyName>paymentTxnId</includeMdcKeyName>
-            <customFields>{"service":"${APP_NAME}"}</customFields>
-            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
-            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-                <maxDepthPerThrowable>30</maxDepthPerThrowable>
-                <shortenedClassNameLength>20</shortenedClassNameLength>
-                <rootCauseFirst>true</rootCauseFirst>
-            </throwableConverter>
-        </encoder>
-    </appender>
-
-    <!-- ═══════════════════════════════════════════════
-         Audit File Appender (financial events only)
-         Retained for escrow dispute resolution / compliance.
-         ═══════════════════════════════════════════════ -->
-    <appender name="AUDIT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/${APP_NAME}-audit.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/${APP_NAME}-audit.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <maxFileSize>50MB</maxFileSize>
-            <maxHistory>90</maxHistory>
-            <totalSizeCap>10GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"service":"${APP_NAME}","logType":"audit"}</customFields>
-        </encoder>
-    </appender>
-
-    <!-- ═══════════════════════════════════════════════
-         Audit Logger (financial transactions)
-         Usage: LoggerFactory.getLogger("AUDIT")
-         Retained 90 days for dispute resolution.
-         ═══════════════════════════════════════════════ -->
-    <logger name="AUDIT" level="INFO" additivity="false">
-        <appender-ref ref="AUDIT_FILE"/>
-        <!-- Also send to main output for real-time visibility -->
-        <springProfile name="dev">
-            <appender-ref ref="CONSOLE"/>
-        </springProfile>
-        <springProfile name="prod">
-            <appender-ref ref="JSON_STDOUT"/>
-        </springProfile>
-    </logger>
 
     <!-- ═══════════════════════════════════════════════
          Category-specific log levels
@@ -176,11 +114,10 @@
         </root>
     </springProfile>
 
-    <!-- PROD: JSON to stdout (for Docker/K8s log drivers) + rolling file -->
+    <!-- PROD: JSON to stdout (for Docker/K8s log drivers) -->
     <springProfile name="prod">
         <root level="WARN">
             <appender-ref ref="JSON_STDOUT"/>
-            <appender-ref ref="JSON_FILE"/>
         </root>
     </springProfile>
 
