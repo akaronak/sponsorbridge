@@ -9,13 +9,15 @@ import com.eventra.entity.User;
 import com.eventra.mapper.UserMapper;
 import com.eventra.repository.UserRepository;
 import com.eventra.security.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class AuthService {
 
     @Autowired
@@ -33,19 +35,33 @@ public class AuthService {
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    @Transactional
+    /**
+     * Register a new user.
+     * Removed @Transactional — single-document MongoDB writes are atomic;
+     * multi-document transactions require a replica set which may not be
+     * provisioned on every deployment target.
+     */
     public LoginResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already registered");
-        }
+        log.info("Register attempt: email={}, role={}", request.getEmail(), request.getRole());
 
+        // ── Validate role ──────────────────────────────────
+        if (request.getRole() == null) {
+            throw new IllegalArgumentException("Role cannot be null");
+        }
         String requestedRole = request.getRole().toUpperCase();
         if (!"ORGANIZER".equals(requestedRole) && !"COMPANY".equals(requestedRole)) {
             throw new IllegalArgumentException("Invalid role. Allowed: ORGANIZER, COMPANY");
         }
 
+        // ── Check duplicate (application-level, precedes DB unique index) ──
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        // ── Hash password ──────────────────────────────────
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
+        // ── Build & persist user ───────────────────────────
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(hashedPassword)
@@ -53,8 +69,19 @@ public class AuthService {
                 .role(Role.valueOf(requestedRole))
                 .build();
 
-        User savedUser = userRepository.save(user);
+        User savedUser;
+        try {
+            savedUser = userRepository.save(user);
+        } catch (DuplicateKeyException ex) {
+            // Race condition: another request registered the same email between
+            // the existsByEmail check and the save.  Return a clean 400.
+            log.warn("Duplicate key on save for email={}", request.getEmail());
+            throw new IllegalArgumentException("Email already registered");
+        }
 
+        log.info("User registered: id={}, email={}", savedUser.getId(), savedUser.getEmail());
+
+        // ── Generate JWT ───────────────────────────────────
         String token = jwtTokenProvider.generateToken(savedUser.getId(), savedUser.getRole().toString());
         UserDTO userDTO = userMapper.toDTO(savedUser);
 
@@ -67,8 +94,8 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
+        log.info("Login attempt: email={}", request.getEmail());
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 

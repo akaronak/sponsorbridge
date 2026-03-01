@@ -178,11 +178,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        log.error("Unhandled exception: {}", ex.getMessage(), ex);
+        // ── INCIDENT FIX: log the FULL stack trace and expose the root cause ──
+        log.error("Unhandled exception [{}]: {}", ex.getClass().getName(), ex.getMessage(), ex);
+
+        // Walk the cause chain so DB / connection errors are not hidden
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        log.error("Root cause [{}]: {}", root.getClass().getName(), root.getMessage());
+
+        // Return the real exception type + message so Render logs and the client
+        // can be used for triage. Remove the detail in a future hardening pass.
+        String detail = String.format("%s: %s", ex.getClass().getSimpleName(),
+                ex.getMessage() != null ? ex.getMessage() : "(no message)");
+
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("An unexpected error occurred")
+                .message(detail)
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }

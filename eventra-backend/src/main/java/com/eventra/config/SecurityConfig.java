@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -44,6 +45,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // Enable CORS using the CorsConfigurationSource bean from WebConfig
+                .cors(Customizer.withDefaults())
+
                 // Disable CSRF for stateless API
                 .csrf(csrf -> csrf.disable())
 
@@ -52,8 +56,12 @@ public class SecurityConfig {
 
                 // Configure endpoint authorization
                 .authorizeHttpRequests(authz -> authz
+                        // Actuator health/info (Render health checks)
+                        .requestMatchers("/actuator/**").permitAll()
+
                         // Public endpoints
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/validate").permitAll()
+                        .requestMatchers("/api/diagnostic/**").permitAll() // Incident triage — remove after resolution
                         .requestMatchers("/api/companies/search").permitAll()
                         .requestMatchers("/api/companies/{id}").permitAll()
                         .requestMatchers("/api/organizers/{id}").permitAll()
